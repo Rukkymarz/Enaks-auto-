@@ -39,6 +39,7 @@ updates replace the old copy instead of duplicating it.
 | Email replies with your approval (IMAP/SMTP) | IMAP + SMTP (works with Zoho Mail), OpenAI | Only after you approve each reply |
 | Feedback summary (Google Sheets) | Google Sheets, Gmail, OpenAI | One summary email, manual trigger |
 | Expense tracker (chat + Google Sheets) | Google Sheets, OpenAI | No |
+| **Lead intake + AI scoring (n8n tables)** | OpenAI-compatible key only (FreeLLMAPI); n8n Data Table `ECC Leads` | No |
 
 All are imported **off**. Before switching one on: add its credentials, run it
 once with "Test workflow", check the output, then activate. Turning on a

@@ -1,0 +1,331 @@
+{
+  "id": "eccLeadIntakeDT01",
+  "name": "ECC - Lead intake + AI scoring (n8n tables)",
+  "active": false,
+  "nodes": [
+    {
+      "id": "8181b733-24cb-452d-98c3-1bda3156ae98",
+      "name": "Lead form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "80c04679-4757-4bc6-ba2c-ec3162ed2b3c",
+      "parameters": {
+        "formTitle": "Express Cleaning Consult - New lead",
+        "formDescription": "Internal intake: enter a lead and it is scored automatically.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email",
+              "fieldType": "email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Phone"
+            },
+            {
+              "fieldLabel": "Company or property"
+            },
+            {
+              "fieldLabel": "Service",
+              "fieldType": "dropdown",
+              "requiredField": true,
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Residential"
+                  },
+                  {
+                    "option": "Commercial / office"
+                  },
+                  {
+                    "option": "Move-in / move-out"
+                  },
+                  {
+                    "option": "Post-construction"
+                  },
+                  {
+                    "option": "Property management (recurring)"
+                  },
+                  {
+                    "option": "Airbnb / short-term rental"
+                  },
+                  {
+                    "option": "Other"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "ZIP code",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Details",
+              "fieldType": "textarea"
+            }
+          ]
+        },
+        "responseMode": "onReceived",
+        "options": {
+          "respondWithOptions": {
+            "values": {
+              "formSubmittedText": "Lead saved and scored."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "9153cf0f-ee5b-4cbb-9e9a-048f99592a83",
+      "name": "Score lead",
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "text": "=Lead for a nationwide cleaning company that books partner cleaners.\nName: {{ $json['Name'] }}\nEmail: {{ $json['Email'] }}\nPhone: {{ $json['Phone'] }}\nCompany/property: {{ $json['Company or property'] }}\nService: {{ $json['Service'] }}\nZIP: {{ $json['ZIP code'] }}\nDetails: {{ $json['Details'] }}",
+        "attributes": {
+          "attributes": [
+            {
+              "name": "score",
+              "type": "number",
+              "description": "Lead quality 0-100. Higher for recurring/commercial work, clear scope, business email, phone given, valid US ZIP.",
+              "required": true
+            },
+            {
+              "name": "tier",
+              "description": "Exactly one of: hot, warm, cold",
+              "required": true
+            },
+            {
+              "name": "reason",
+              "description": "One sentence explaining the score",
+              "required": true
+            },
+            {
+              "name": "next_step",
+              "description": "One concrete next action for the owner, e.g. call within 1 hour, send quote, request photos",
+              "required": true
+            }
+          ]
+        },
+        "options": {
+          "systemPromptTemplate": "You qualify cleaning-service leads. Only use facts in the lead. If a field is missing, say so in the reason. Return only the requested attributes."
+        }
+      }
+    },
+    {
+      "id": "c0eaf92b-9942-42c9-bd0f-957b4564edf3",
+      "name": "AI model (FreeLLMAPI)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        260,
+        220
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "id",
+          "value": "auto"
+        },
+        "options": {
+          "temperature": 0.2
+        }
+      }
+    },
+    {
+      "id": "ec5bb096-d895-4a21-884c-77bd51f0007a",
+      "name": "Build row",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        520,
+        0
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a63db3e0-3f0f-4d69-8f5b-6a1f01cc5d49",
+              "name": "submitted_at",
+              "type": "string",
+              "value": "={{ $now.toISO() }}"
+            },
+            {
+              "id": "41540267-a0ab-45cd-87fa-7e13388adefe",
+              "name": "name",
+              "type": "string",
+              "value": "={{ $('Lead form').item.json['Name'] }}"
+            },
+            {
+              "id": "fc529ed3-1cb0-42ef-9db6-6f3fa48983a4",
+              "name": "email",
+              "type": "string",
+              "value": "={{ $('Lead form').item.json['Email'] }}"
+            },
+            {
+              "id": "39931897-8454-4209-894c-66292cf84d68",
+              "name": "phone",
+              "type": "string",
+              "value": "={{ $('Lead form').item.json['Phone'] }}"
+            },
+            {
+              "id": "4ec13e27-5cb2-4c30-8c76-0e57838410f3",
+              "name": "company",
+              "type": "string",
+              "value": "={{ $('Lead form').item.json['Company or property'] }}"
+            },
+            {
+              "id": "6f8b5966-7595-4f9e-b594-6ef9ae4111d2",
+              "name": "service",
+              "type": "string",
+              "value": "={{ $('Lead form').item.json['Service'] }}"
+            },
+            {
+              "id": "6346076e-7f35-4675-b192-e4b1eab6173b",
+              "name": "zip",
+              "type": "string",
+              "value": "={{ $('Lead form').item.json['ZIP code'] }}"
+            },
+            {
+              "id": "852858ac-cb38-47b5-b7bc-880312c85a48",
+              "name": "details",
+              "type": "string",
+              "value": "={{ $('Lead form').item.json['Details'] }}"
+            },
+            {
+              "id": "4f725073-234d-45b9-adb7-c1c4573b0189",
+              "name": "score",
+              "type": "number",
+              "value": "={{ $json.output.score }}"
+            },
+            {
+              "id": "308bdb77-d08a-4913-a856-bc4d09abbc80",
+              "name": "tier",
+              "type": "string",
+              "value": "={{ $json.output.tier }}"
+            },
+            {
+              "id": "8463b5d2-906e-486a-9e78-85aad490ab95",
+              "name": "reason",
+              "type": "string",
+              "value": "={{ $json.output.reason }}"
+            },
+            {
+              "id": "7b7c281e-67db-4ae2-b789-aeb7507b3882",
+              "name": "next_step",
+              "type": "string",
+              "value": "={{ $json.output.next_step }}"
+            },
+            {
+              "id": "6102222d-d7c1-4ae3-ba58-7a8d19c98d3c",
+              "name": "status",
+              "type": "string",
+              "value": "new"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "0c96dbd3-386b-4b44-b87c-4995aff22077",
+      "name": "Save to ECC Leads table",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        780,
+        0
+      ],
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "cdbe9b5f-9670-460c-a539-fafcf0e955ad",
+      "name": "Setup note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -260
+      ],
+      "parameters": {
+        "width": 860,
+        "height": 220,
+        "content": "## ECC lead intake (no Google needed)\n1. Lead form \u2192 2. AI scores it via FreeLLMAPI (OpenAI credential, model `auto`) \u2192 3. Row saved in n8n Data Table **ECC Leads**.\nNo emails or messages are sent. Form is reachable only on this PC (localhost).\nTable columns: submitted_at, name, email, phone, company, service, zip, details, score (number), tier, reason, next_step, status."
+      }
+    }
+  ],
+  "connections": {
+    "Lead form": {
+      "main": [
+        [
+          {
+            "node": "Score lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI model (FreeLLMAPI)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Score lead",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score lead": {
+      "main": [
+        [
+          {
+            "node": "Build row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build row": {
+      "main": [
+        [
+          {
+            "node": "Save to ECC Leads table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
