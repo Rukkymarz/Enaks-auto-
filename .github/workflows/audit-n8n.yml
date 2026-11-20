@@ -1,0 +1,21 @@
+name: Audit n8n workflows
+
+on:
+  push:
+    paths: ['workflows/**', 'tools/n8n_audit.py', '.github/workflows/audit-n8n.yml']
+  pull_request:
+    paths: ['workflows/**', 'tools/n8n_audit.py']
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Block shell/SSH/file nodes, secrets, active=true, embedded credential IDs
+        run: python3 -I tools/n8n_audit.py workflows
