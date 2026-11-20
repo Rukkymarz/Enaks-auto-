@@ -2,6 +2,9 @@
 # Run: powershell -ExecutionPolicy Bypass -File .\setup\setup-n8n.ps1
 # Safe to re-run: workflows have fixed IDs, so re-import updates them in place (and switches them OFF again).
 $ErrorActionPreference = "Stop"
+$Log = "$HOME\Documents\enaks-setup-transcript.log"
+Start-Transcript -Path $Log -Force | Out-Null
+trap { Write-Host "SETUP ERROR: $($_.Exception.Message)" -ForegroundColor Red; Write-Host "At: $($_.InvocationInfo.PositionMessage)"; Stop-Transcript | Out-Null; exit 1 }
 $N8nVersion = "2.48.6"                       # pinned; change deliberately
 $Repo       = "$HOME\Documents\Enaks-auto"
 function Run($exe,[string[]]$a){ & $exe @a; if($LASTEXITCODE -ne 0){ throw "$exe $($a -join ' ') failed ($LASTEXITCODE)" } }
@@ -33,3 +36,5 @@ else { Write-Host "python not found - relying on the GitHub Actions audit result
 Run n8n @('import:workflow','--separate',"--input=$Repo\workflows")
 Write-Host "`nImported. Start n8n with:  powershell -ExecutionPolicy Bypass -File `"$Repo\setup\start-n8n.ps1`"" -ForegroundColor Green
 Write-Host "Then open http://localhost:5678 , create your owner account, add credentials, and test each workflow manually before activating."
+Stop-Transcript | Out-Null
+exit 0
