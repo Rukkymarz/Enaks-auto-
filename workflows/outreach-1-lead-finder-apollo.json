@@ -1,0 +1,538 @@
+{
+  "id": "eccApolloFinder01",
+  "name": "ECC - Lead finder (Apollo -> AI drafts)",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/New_York"
+  },
+  "nodes": [
+    {
+      "id": "7b50e668-79eb-431d-b874-75d7866d22d2",
+      "name": "Weekdays 8am",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -220,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 1-5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "95e09741-00d8-4683-af2c-6b5ee0d7a0f9",
+      "name": "Run now",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -220,
+        200
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "a6a7a2bc-95e3-48d7-9def-170c1ab00e39",
+      "name": "Segments",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        100
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b74f1e5f-ae0d-43ed-b1d4-0c02fd4a841b",
+              "name": "segments",
+              "type": "array",
+              "value": "={{ [{\"segment\": \"Property managers\", \"titles\": [\"property manager\", \"community manager\", \"regional property manager\", \"portfolio manager\"], \"org_keywords\": [], \"pitch\": \"recurring common-area cleaning, unit turnovers and move-out cleans across their properties\", \"location\": \"United States\", \"per_page\": 5}, {\"segment\": \"Realtors\", \"titles\": [\"realtor\", \"real estate agent\", \"real estate broker\"], \"org_keywords\": [], \"pitch\": \"pre-listing deep cleans and move-in/move-out cleans that help listings show and close faster\", \"location\": \"United States\", \"per_page\": 5}, {\"segment\": \"Contractors / builders\", \"titles\": [\"general contractor\", \"construction project manager\", \"superintendent\", \"owner\"], \"org_keywords\": [\"construction\", \"general contractor\", \"home builder\"], \"pitch\": \"post-construction and final cleans so jobs are handed over spotless and on schedule\", \"location\": \"United States\", \"per_page\": 5}, {\"segment\": \"Short-term rental managers\", \"titles\": [\"owner\", \"operations manager\", \"property manager\", \"founder\"], \"org_keywords\": [\"vacation rental\", \"short term rental\", \"airbnb management\"], \"pitch\": \"fast, reliable turnover cleans between guests with consistent quality\", \"location\": \"United States\", \"per_page\": 5}] }}"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "52f4c3f4-b783-4709-bb3e-7b380588f2ee",
+      "name": "Split segments",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        220,
+        100
+      ],
+      "parameters": {
+        "fieldToSplitOut": "segments",
+        "options": {}
+      }
+    },
+    {
+      "id": "f1a9590a-6800-4167-9365-a33f1d91e30a",
+      "name": "Apollo search (free)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://api.apollo.io/api/v1/mixed_people/api_search?' + [ ...$json.titles.map(t => 'person_titles[]=' + encodeURIComponent(t)), ...($json.org_keywords || []).map(k => 'q_organization_keyword_tags[]=' + encodeURIComponent(k)), 'person_locations[]=' + encodeURIComponent($json.location), 'per_page=' + $json.per_page, 'page=' + (($now.ordinal % 40) + 1) ].join('&') }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      }
+    },
+    {
+      "id": "2e2c7946-6b17-480d-9c40-d849186d2f37",
+      "name": "One item per person",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        660,
+        100
+      ],
+      "parameters": {
+        "fieldToSplitOut": "people",
+        "options": {}
+      }
+    },
+    {
+      "id": "6c0555fc-9c7a-478b-b6ce-02074aee7cf0",
+      "name": "Max 20 per day",
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        880,
+        100
+      ],
+      "parameters": {
+        "maxItems": 20
+      }
+    },
+    {
+      "id": "df6b7f08-25e7-4158-9eb6-77e416631a12",
+      "name": "Not contacted before",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1100,
+        100
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "rowNotExists",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "p9EdDji7jFNnxWgo",
+          "cachedResultName": "ECC Outreach"
+        },
+        "matchType": "anyCondition",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "apollo_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.id }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "f22ae6b8-1445-43c7-a606-015a85791384",
+      "name": "Apollo get email (credits)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://api.apollo.io/api/v1/people/match?id=' + $json.id + '&reveal_personal_emails=false&reveal_phone_number=false' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      }
+    },
+    {
+      "id": "9247a7ec-0f35-4d29-b138-0ac8390a9513",
+      "name": "Verified email only",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        1540,
+        100
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f4ac71f2-0001-4e1d-b3e5-9f1d869f9118",
+              "leftValue": "={{ $json.person.email }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "0ab361f2-7cf2-425b-9609-790e2c366258",
+              "leftValue": "={{ $json.person.email_status }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "verified"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "aebdb9f9-f662-4213-ac4b-b91494d314d3",
+      "name": "Write email (AI)",
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [
+        1760,
+        100
+      ],
+      "parameters": {
+        "text": "=Write a first-touch cold email from Rukky, owner of Express Cleaning Consult (nationwide cleaning company; clients book with us and vetted local partner cleaners do the work; every job is quoted individually, free quote).\nRecipient: {{ $json.person.first_name }} {{ $json.person.last_name }}, {{ $json.person.title }} at {{ $json.person.organization?.name || 'their company' }}, located {{ [$json.person.city, $json.person.state].filter(Boolean).join(', ') }}.\nSegment: {{ $('Split segments').item.json.segment }}. What we offer this segment: {{ $('Split segments').item.json.pitch }}.",
+        "attributes": {
+          "attributes": [
+            {
+              "name": "subject",
+              "description": "Subject line, under 7 words, no clickbait, no ALL CAPS, no emojis",
+              "required": true
+            },
+            {
+              "name": "body",
+              "description": "Plain-text email body, 60-110 words. Greet by first name. One specific line relevant to their role/company. Offer a free, no-obligation quote. One clear call to action: reply to this email. Sign off exactly: 'Rukky\\nExpress Cleaning Consult\\nexpresscleaningconsult.com'. Do NOT include prices, guarantees, fake stats, fake references, or an unsubscribe line.",
+              "required": true
+            }
+          ]
+        },
+        "options": {
+          "systemPromptTemplate": "You write short, honest, personal B2B cold emails. Never invent facts about the recipient or claims about the company. No placeholders like [Name]."
+        }
+      }
+    },
+    {
+      "id": "137ee37f-84c4-4ddb-a217-818fedd71db2",
+      "name": "AI model (FreeLLMAPI)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1760,
+        320
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "id",
+          "value": "auto"
+        },
+        "options": {
+          "temperature": 0.4
+        }
+      }
+    },
+    {
+      "id": "d615af27-a126-4b68-90e3-d18de8f563a8",
+      "name": "Build draft row",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1980,
+        100
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "379862ee-a0bc-45cd-a314-404ee3eaa423",
+              "name": "created_at",
+              "type": "string",
+              "value": "={{ $now.toISO() }}"
+            },
+            {
+              "id": "9c13f6ef-3431-46b1-9bda-0afcc1948458",
+              "name": "segment",
+              "type": "string",
+              "value": "={{ $('Split segments').item.json.segment }}"
+            },
+            {
+              "id": "06c2fa12-89c9-4550-a93b-d21db1527403",
+              "name": "first_name",
+              "type": "string",
+              "value": "={{ $('Apollo get email (credits)').item.json.person.first_name }}"
+            },
+            {
+              "id": "8aa373cb-c804-4050-b34e-594359e9e4b3",
+              "name": "last_name",
+              "type": "string",
+              "value": "={{ $('Apollo get email (credits)').item.json.person.last_name }}"
+            },
+            {
+              "id": "eff40a9d-d8db-4664-a7c9-320610245d99",
+              "name": "title",
+              "type": "string",
+              "value": "={{ $('Apollo get email (credits)').item.json.person.title }}"
+            },
+            {
+              "id": "79933a17-7354-4f93-8640-982373e348df",
+              "name": "company",
+              "type": "string",
+              "value": "={{ $('Apollo get email (credits)').item.json.person.organization?.name || '' }}"
+            },
+            {
+              "id": "7eef487d-4b44-4c5e-a3ee-6b61d60d431c",
+              "name": "email",
+              "type": "string",
+              "value": "={{ $('Apollo get email (credits)').item.json.person.email }}"
+            },
+            {
+              "id": "11310a8d-874c-43eb-adab-207298daf613",
+              "name": "location",
+              "type": "string",
+              "value": "={{ [$('Apollo get email (credits)').item.json.person.city, $('Apollo get email (credits)').item.json.person.state].filter(Boolean).join(', ') }}"
+            },
+            {
+              "id": "9c337adf-6e98-40cd-a817-e35c3629fac9",
+              "name": "apollo_id",
+              "type": "string",
+              "value": "={{ $('Apollo get email (credits)').item.json.person.id }}"
+            },
+            {
+              "id": "0b59adc2-6b47-45e7-9f20-a5df9303608a",
+              "name": "subject",
+              "type": "string",
+              "value": "={{ $json.output.subject }}"
+            },
+            {
+              "id": "5e1ee629-629e-46ca-be7d-116bcc1e4212",
+              "name": "body",
+              "type": "string",
+              "value": "={{ $json.output.body }}"
+            },
+            {
+              "id": "3f5e7dc2-0f64-4fde-9aa8-7b9758b7c149",
+              "name": "status",
+              "type": "string",
+              "value": "pending_approval"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "306166e4-335b-4c34-8507-898ab6d9382d",
+      "name": "Save draft",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2200,
+        100
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "p9EdDji7jFNnxWgo",
+          "cachedResultName": "ECC Outreach"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "e35160ec-2795-4590-9c47-9c806ad952bb",
+      "name": "README",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        -300
+      ],
+      "parameters": {
+        "width": 1100,
+        "height": 260,
+        "content": "## ECC lead finder \u2014 DRAFTS ONLY, sends nothing\nSearches Apollo (free) for 4 segments x 5 people, skips anyone already in **ECC Outreach**, spends Apollo credits only on new people (max 20/day), keeps verified work emails, AI writes a personal email, saves it as `pending_approval`.\nReview drafts in Data tables \u2192 ECC Outreach: edit subject/body freely, set status to `rejected` for any you don't want.\nThen run **ECC - Send approved outreach**.\nCredentials: Header Auth `Apollo API` (name `x-api-key`, master API key) on both Apollo nodes; OpenAI (FreeLLMAPI) on the AI model."
+      }
+    }
+  ],
+  "connections": {
+    "Weekdays 8am": {
+      "main": [
+        [
+          {
+            "node": "Segments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run now": {
+      "main": [
+        [
+          {
+            "node": "Segments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Segments": {
+      "main": [
+        [
+          {
+            "node": "Split segments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split segments": {
+      "main": [
+        [
+          {
+            "node": "Apollo search (free)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apollo search (free)": {
+      "main": [
+        [
+          {
+            "node": "One item per person",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "One item per person": {
+      "main": [
+        [
+          {
+            "node": "Max 20 per day",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Max 20 per day": {
+      "main": [
+        [
+          {
+            "node": "Not contacted before",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Not contacted before": {
+      "main": [
+        [
+          {
+            "node": "Apollo get email (credits)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apollo get email (credits)": {
+      "main": [
+        [
+          {
+            "node": "Verified email only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verified email only": {
+      "main": [
+        [
+          {
+            "node": "Write email (AI)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI model (FreeLLMAPI)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Write email (AI)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write email (AI)": {
+      "main": [
+        [
+          {
+            "node": "Build draft row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build draft row": {
+      "main": [
+        [
+          {
+            "node": "Save draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

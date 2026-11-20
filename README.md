@@ -49,6 +49,15 @@ Sources and licence: see `workflows/SOURCES.md` (templates are CC BY 4.0;
 this repo's own code is MIT). n8n itself is under the Sustainable Use License:
 free for internal business use, not for reselling n8n as a hosted service.
 
+## Outreach pipeline (Apollo → AI drafts → you approve → Zoho)
+
+| Workflow | Does | Sends email? |
+|---|---|---|
+| `outreach-1-lead-finder-apollo` | Weekdays 8am: Apollo search (free) for property managers, realtors, contractors, short-term-rental managers → skip already-contacted → Apollo email lookup (credits, max 20/day) → verified only → AI-written draft → `ECC Outreach` table as `pending_approval` | **No** |
+| `outreach-2-send-approved` | Only when you submit its form with `SEND`: sends up to 20/day of `pending_approval` drafts via Zoho SMTP with mailing address + opt-out line, marks `sent`/`failed` | **Yes, only on your confirmation** |
+
+To stop someone ever being emailed, set their row status to `rejected` or `unsubscribed`.
+
 ## Adding a workflow
 
 Export it from n8n (Download), drop the JSON in `workflows/`, set `"active": false`,

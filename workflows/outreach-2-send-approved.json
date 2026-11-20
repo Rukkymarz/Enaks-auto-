@@ -1,0 +1,566 @@
+{
+  "id": "eccOutreachSend01",
+  "name": "ECC - Send approved outreach (you confirm)",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/New_York"
+  },
+  "nodes": [
+    {
+      "id": "3d094f3d-2262-4ce2-8314-021e117d8856",
+      "name": "Approve batch form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "7263a0ff-919c-4963-9705-55de0c2e00a9",
+      "parameters": {
+        "formTitle": "Send approved outreach batch",
+        "formDescription": "Sends up to today's remaining limit (20/day) of drafts with status pending_approval in ECC Outreach. Review and edit or reject drafts first.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Type SEND to confirm",
+              "requiredField": true
+            }
+          ]
+        },
+        "responseMode": "onReceived",
+        "options": {
+          "respondWithOptions": {
+            "values": {
+              "formSubmittedText": "Batch started. Check ECC Outreach for status sent/failed."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "8dc32ebd-81e5-4222-9641-7a8e1b6410fa",
+      "name": "Confirmed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "206c6f00-870a-412b-872a-2da48fc88281",
+              "leftValue": "={{ $json['Type SEND to confirm'] }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "SEND"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "2330f239-593b-4321-9486-8528e2b1eb8a",
+      "name": "Sender settings",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0ddc3fe6-099e-4559-8ce9-c69c704ea1ee",
+              "name": "from_email",
+              "type": "string",
+              "value": "SET_YOUR_ZOHO_EMAIL"
+            },
+            {
+              "id": "231c9372-0713-43e5-85bb-8fe668b94a92",
+              "name": "from_name",
+              "type": "string",
+              "value": "Rukky | Express Cleaning Consult"
+            },
+            {
+              "id": "d2b0fe3c-b1dd-421c-9d35-c60b52c1599a",
+              "name": "mailing_address",
+              "type": "string",
+              "value": "SET_YOUR_BUSINESS_MAILING_ADDRESS"
+            },
+            {
+              "id": "8ceb025c-17fa-4ea8-9f64-2c1b0ff7aa04",
+              "name": "daily_limit",
+              "type": "string",
+              "value": "20"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "0e29d42d-cc55-4ddd-bddc-2d250ab058d5",
+      "name": "Settings filled in?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "dd1d0c2d-2710-450e-87d9-77334f27820e",
+              "leftValue": "={{ $json.from_email }}",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              },
+              "rightValue": "SET_YOUR"
+            },
+            {
+              "id": "22ff19f6-bd69-48a1-8620-25b9eb5a0960",
+              "leftValue": "={{ $json.mailing_address }}",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              },
+              "rightValue": "SET_YOUR"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "5b5b69fe-60e4-4718-bb97-2dd7cde14d0e",
+      "name": "Stop: fill Sender settings",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        880,
+        180
+      ],
+      "parameters": {
+        "errorMessage": "Open the 'Sender settings' node and set your Zoho from-email and business mailing address (required by CAN-SPAM) before sending."
+      }
+    },
+    {
+      "id": "4b5271f5-5b4d-4e5f-b445-656b93549a70",
+      "name": "Sent today",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        0
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "p9EdDji7jFNnxWgo",
+          "cachedResultName": "ECC Outreach"
+        },
+        "matchType": "anyCondition",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "sent_date",
+              "condition": "eq",
+              "keyValue": "={{ $now.toFormat('yyyy-MM-dd') }}"
+            }
+          ]
+        },
+        "returnAll": true
+      }
+    },
+    {
+      "id": "e3136a1f-5971-4418-9270-bb777ad73675",
+      "name": "Remaining today",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1100,
+        0
+      ],
+      "executeOnce": true,
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e78ca47a-8cbd-44e3-ab19-a23d7b5a6bc2",
+              "name": "remaining",
+              "type": "number",
+              "value": "={{ Number($('Sender settings').item.json.daily_limit) - $('Sent today').all().filter(i => i.json.email).length }}"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "27fd9e34-0528-407f-95c5-031d62945c5c",
+      "name": "Any left today?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1320,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "9f07d05d-c306-44cc-9ec0-6c58259332e4",
+              "leftValue": "={{ $json.remaining }}",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              },
+              "rightValue": 0
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "ed49160b-7fd2-40f9-8327-b619153c1158",
+      "name": "Pending drafts",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1540,
+        0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "p9EdDji7jFNnxWgo",
+          "cachedResultName": "ECC Outreach"
+        },
+        "matchType": "anyCondition",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "pending_approval"
+            }
+          ]
+        },
+        "returnAll": false,
+        "limit": "={{ $json.remaining }}",
+        "orderBy": true,
+        "orderByColumn": "createdAt",
+        "orderByDirection": "ASC"
+      }
+    },
+    {
+      "id": "814d76b5-f53a-46b4-b331-91b044cd27ff",
+      "name": "Send email (Zoho SMTP)",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1760,
+        0
+      ],
+      "onError": "continueErrorOutput",
+      "parameters": {
+        "fromEmail": "={{ $('Sender settings').item.json.from_name }} <{{ $('Sender settings').item.json.from_email }}>",
+        "toEmail": "={{ $json.email }}",
+        "subject": "={{ $json.subject }}",
+        "emailFormat": "text",
+        "text": "={{ $json.body }}\n\n--\nExpress Cleaning Consult, {{ $('Sender settings').item.json.mailing_address }}\nNot the right person, or prefer no more emails? Reply \"unsubscribe\" and I won't contact you again.",
+        "options": {
+          "appendAttribution": false
+        }
+      }
+    },
+    {
+      "id": "8dd260f5-1d50-4486-9c05-d0a7f31de94e",
+      "name": "Mark sent",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1980,
+        -80
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "p9EdDji7jFNnxWgo",
+          "cachedResultName": "ECC Outreach"
+        },
+        "matchType": "anyCondition",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "email",
+              "condition": "eq",
+              "keyValue": "={{ $('Pending drafts').item.json.email }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "sent",
+            "sent_at": "={{ $now.toISO() }}",
+            "sent_date": "={{ $now.toFormat('yyyy-MM-dd') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sent_at",
+              "displayName": "sent_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sent_date",
+              "displayName": "sent_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "9e491f03-7789-486d-b80d-3da831a1f985",
+      "name": "Mark failed",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1980,
+        120
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "p9EdDji7jFNnxWgo",
+          "cachedResultName": "ECC Outreach"
+        },
+        "matchType": "anyCondition",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "email",
+              "condition": "eq",
+              "keyValue": "={{ $('Pending drafts').item.json.email }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "failed"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "4688934f-5912-41ac-8f9f-5888e4511b2c",
+      "name": "README",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        -320
+      ],
+      "parameters": {
+        "width": 1100,
+        "height": 260,
+        "content": "## ECC outreach sender \u2014 sends ONLY when you submit the form with SEND\nRespects 20/day (counts rows sent today). Every email gets your mailing address + an opt-out line (CAN-SPAM).\nSetup: fill **Sender settings** (Zoho address + business mailing address). SMTP credential: smtp.zoho.com, port 465, SSL on, user = your Zoho email, password = a Zoho *app-specific password*.\nWhen someone replies 'unsubscribe', set their row status to `unsubscribed` \u2014 they are never emailed again (only `pending_approval` rows send)."
+      }
+    }
+  ],
+  "connections": {
+    "Approve batch form": {
+      "main": [
+        [
+          {
+            "node": "Confirmed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confirmed?": {
+      "main": [
+        [
+          {
+            "node": "Sender settings",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Sender settings": {
+      "main": [
+        [
+          {
+            "node": "Settings filled in?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Settings filled in?": {
+      "main": [
+        [
+          {
+            "node": "Sent today",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stop: fill Sender settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sent today": {
+      "main": [
+        [
+          {
+            "node": "Remaining today",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remaining today": {
+      "main": [
+        [
+          {
+            "node": "Any left today?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Any left today?": {
+      "main": [
+        [
+          {
+            "node": "Pending drafts",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Pending drafts": {
+      "main": [
+        [
+          {
+            "node": "Send email (Zoho SMTP)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send email (Zoho SMTP)": {
+      "main": [
+        [
+          {
+            "node": "Mark sent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
