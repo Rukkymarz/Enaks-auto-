@@ -251,8 +251,9 @@
       "parameters": {
         "dataTableId": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "mode": "id",
+          "value": "QteWEKH6UFGci4eY",
+          "cachedResultName": "ECC Leads"
         },
         "columns": {
           "mappingMode": "autoMapInputData",
