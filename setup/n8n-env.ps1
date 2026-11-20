@@ -11,3 +11,6 @@ $env:N8N_BLOCK_ENV_ACCESS_IN_NODE = "true"        # workflows can't read your en
 $env:NODES_EXCLUDE = '["n8n-nodes-base.executeCommand","n8n-nodes-base.ssh","n8n-nodes-base.readWriteFile","n8n-nodes-base.localFileTrigger"]'
 $env:GENERIC_TIMEZONE = "America/New_York"
 $env:TZ = "America/New_York"
+
+# npm global installs (n8n) live here; make sure this session can find them
+if(($env:Path -split ';') -notcontains "$env:APPDATA\npm"){ $env:Path += ";$env:APPDATA\npm" }

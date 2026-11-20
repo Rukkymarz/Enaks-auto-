@@ -12,7 +12,8 @@ if($nv -notmatch '^v(2[4-9]|[3-9]\d)\.'){ throw "n8n $N8nVersion needs Node 24+ 
 Run git @('--version')
 
 # 2. Install n8n (pinned)
-$have = (& n8n --version 2>$null)
+. "$PSScriptRoot\n8n-env.ps1"   # also puts npm global bin on PATH
+$have = if(Get-Command n8n -EA SilentlyContinue){ (& n8n --version) } else { $null }
 if($have -ne $N8nVersion){ Run npm @('install','-g',"n8n@$N8nVersion",'--no-audit','--no-fund') }
 Write-Host "n8n $(& n8n --version)"
 
@@ -22,7 +23,8 @@ else { Run git @('clone','-q','https://github.com/Rukkymarz/Enaks-auto-',$Repo) 
 Write-Host "workflows @ $(& git -C $Repo rev-parse --short HEAD)"
 
 # 4. Audit gate (same check as GitHub Actions); refuse to import if anything is blocked
-$py = @('python','py') | ? { Get-Command $_ -EA SilentlyContinue } | select -First 1
+$py = $null
+foreach($c in 'py','python'){ if(Get-Command $c -EA SilentlyContinue){ try { if((& $c --version 2>&1 | Out-String) -match 'Python 3'){ $py=$c; break } } catch {} } }  # skips the Microsoft Store stub
 if($py){ & $py -I "$Repo\tools\n8n_audit.py" "$Repo\workflows"; if($LASTEXITCODE -ne 0){ throw "Audit blocked a workflow - not importing." } }
 else { Write-Host "python not found - relying on the GitHub Actions audit result" -ForegroundColor Yellow }
 
