@@ -87,7 +87,7 @@
               "id": "0ddc3fe6-099e-4559-8ce9-c69c704ea1ee",
               "name": "from_email",
               "type": "string",
-              "value": "SET_YOUR_ZOHO_EMAIL"
+              "value": "support@expresscleaningconsult.com"
             },
             {
               "id": "231c9372-0713-43e5-85bb-8fe668b94a92",
@@ -293,7 +293,7 @@
     },
     {
       "id": "814d76b5-f53a-46b4-b331-91b044cd27ff",
-      "name": "Send email (Zoho SMTP)",
+      "name": "Send email (Resend SMTP)",
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
       "position": [
@@ -309,6 +309,11 @@
         "text": "={{ $json.body }}\n\n--\nExpress Cleaning Consult, {{ $('Sender settings').item.json.mailing_address }}\nNot the right person, or prefer no more emails? Reply \"unsubscribe\" and I won't contact you again.",
         "options": {
           "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "smtp": {
+          "name": "Resend SMTP (support@)"
         }
       }
     },
@@ -442,8 +447,39 @@
       "parameters": {
         "width": 1100,
         "height": 260,
-        "content": "## ECC outreach sender \u2014 sends ONLY when you submit the form with SEND\nRespects 20/day (counts rows sent today). Every email gets your mailing address + an opt-out line (CAN-SPAM).\nSetup: fill **Sender settings** (Zoho address + business mailing address). SMTP credential: smtp.zoho.com, port 465, SSL on, user = your Zoho email, password = a Zoho *app-specific password*.\nWhen someone replies 'unsubscribe', set their row status to `unsubscribed` \u2014 they are never emailed again (only `pending_approval` rows send)."
+        "content": "## ECC outreach sender \u2014 sends ONLY when you submit the form with SEND\nRespects 20/day (counts rows sent today). Every email gets your mailing address + an opt-out line (CAN-SPAM).\nSetup: fill **Sender settings** (Resend address + business mailing address). SMTP credential: smtp.zoho.com, port 465, SSL on, user = your Resend email, password = a Resend *app-specific password*.\nWhen someone replies 'unsubscribe', set their row status to `unsubscribed` \u2014 they are never emailed again (only `pending_approval` rows send)."
       }
+    },
+    {
+      "id": "1214040a-f31b-48c1-bbae-b682f951f8db",
+      "name": "HubSpot: log contact",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.1,
+      "position": [
+        2200,
+        -80
+      ],
+      "parameters": {
+        "authentication": "appToken",
+        "resource": "contact",
+        "operation": "upsert",
+        "email": "={{ $('Pending drafts').item.json.email }}",
+        "additionalFields": {
+          "firstName": "={{ $('Pending drafts').item.json.first_name }}",
+          "lastName": "={{ $('Pending drafts').item.json.last_name }}",
+          "companyName": "={{ $('Pending drafts').item.json.company }}",
+          "jobTitle": "={{ $('Pending drafts').item.json.title }}",
+          "lifeCycleStage": "lead",
+          "leadStatus": "ATTEMPTED_TO_CONTACT",
+          "message": "={{ 'Outreach (' + $('Pending drafts').item.json.segment + ') sent ' + $now.toFormat('yyyy-MM-dd') + ': ' + $('Pending drafts').item.json.subject }}"
+        }
+      },
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot private app (ECC)"
+        }
+      },
+      "onError": "continueRegularOutput"
     }
   ],
   "connections": {
@@ -537,14 +573,14 @@
       "main": [
         [
           {
-            "node": "Send email (Zoho SMTP)",
+            "node": "Send email (Resend SMTP)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Send email (Zoho SMTP)": {
+    "Send email (Resend SMTP)": {
       "main": [
         [
           {
@@ -556,6 +592,17 @@
         [
           {
             "node": "Mark failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark sent": {
+      "main": [
+        [
+          {
+            "node": "HubSpot: log contact",
             "type": "main",
             "index": 0
           }

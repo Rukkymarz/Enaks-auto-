@@ -1,0 +1,238 @@
+{
+  "id": "eccQuoteToHubspot01",
+  "name": "ECC - Website quotes -> HubSpot deals",
+  "nodes": [
+    {
+      "id": "87e8c96f-a9ac-4bbb-8527-890a0d1c47fd",
+      "name": "README",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -460,
+        -260
+      ],
+      "parameters": {
+        "content": "## ECC - Website quotes -> HubSpot\nWatches the Gmail inbox for the website's **New quote request** notification emails (sent by Resend from support@).\nFor each one it creates/updates the **HubSpot contact** and opens a **deal** in the default pipeline at *Appointment scheduled*, so every website job request is tracked.\n\n**Sends no email.** Needs: `Gmail IMAP (expressconsulting92)` (Gmail app password) and `HubSpot private app (ECC)`.\nTest once with a real notification, then activate.",
+        "width": 520,
+        "height": 420
+      }
+    },
+    {
+      "id": "c77b03ab-71d5-4c66-8719-ab25e43096e5",
+      "name": "New quote email (IMAP)",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "mailbox": "INBOX",
+        "postProcessAction": "nothing",
+        "format": "simple",
+        "options": {
+          "customEmailConfig": "[\"UNSEEN\", [\"SUBJECT\", \"New quote request\"], [\"FROM\", \"support@expresscleaningconsult.com\"]]"
+        }
+      },
+      "credentials": {
+        "imap": {
+          "name": "Gmail IMAP (expressconsulting92)"
+        }
+      }
+    },
+    {
+      "id": "cb1eb4ce-e37f-47fe-8329-5e82322c56e2",
+      "name": "Parse request",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b178536b-9775-4721-b7b1-4db0b14a9fa0",
+              "name": "receipt",
+              "type": "string",
+              "value": "={{ ($json.textPlain || $json.text || '').match(/Receipt: (.*)/)?.[1]?.trim() }}"
+            },
+            {
+              "id": "9d2f0879-60e8-47ee-abba-0b5c659bde55",
+              "name": "customer",
+              "type": "string",
+              "value": "={{ ($json.textPlain || $json.text || '').match(/Customer: (.*)/)?.[1]?.trim() }}"
+            },
+            {
+              "id": "0c683ec3-c18e-406c-aedc-4ffb1b6ef003",
+              "name": "email",
+              "type": "string",
+              "value": "={{ ($json.textPlain || $json.text || '').match(/Email: (.*)/)?.[1]?.trim() }}"
+            },
+            {
+              "id": "ddc92a71-f1c5-4d77-807a-ef514df74349",
+              "name": "phone",
+              "type": "string",
+              "value": "={{ ($json.textPlain || $json.text || '').match(/Phone: (.*)/)?.[1]?.trim() }}"
+            },
+            {
+              "id": "688b0e73-6958-45ad-b375-ec965a3e56dd",
+              "name": "service",
+              "type": "string",
+              "value": "={{ ($json.textPlain || $json.text || '').match(/Service: (.*)/)?.[1]?.trim() }}"
+            },
+            {
+              "id": "75da1355-01ea-491a-bbb8-45d5c6b84294",
+              "name": "location",
+              "type": "string",
+              "value": "={{ ($json.textPlain || $json.text || '').match(/Location: (.*)/)?.[1]?.trim() }}"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "4b416637-a2a6-4868-abb3-153487d364b6",
+      "name": "Has customer email?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "8b98a58e-eddb-4d6a-887f-342e2119b537",
+              "leftValue": "={{ $json.email }}",
+              "rightValue": "@",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "c30df620-11cb-4b11-8699-b344ed0b2f1b",
+      "name": "HubSpot: upsert customer",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.1,
+      "position": [
+        660,
+        -80
+      ],
+      "parameters": {
+        "authentication": "appToken",
+        "resource": "contact",
+        "operation": "upsert",
+        "email": "={{ $json.email }}",
+        "additionalFields": {
+          "firstName": "={{ ($json.customer || '').split(' ')[0] }}",
+          "lastName": "={{ ($json.customer || '').split(' ').slice(1).join(' ') }}",
+          "phoneNumber": "={{ $json.phone }}",
+          "city": "={{ $json.location }}",
+          "lifeCycleStage": "salesqualifiedlead",
+          "leadStatus": "NEW",
+          "message": "={{ 'Website quote ' + $json.receipt + ': ' + $json.service }}"
+        }
+      },
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot private app (ECC)"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "526e9217-b3c5-49e6-8d5f-07439e1652c4",
+      "name": "HubSpot: open deal",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.1,
+      "position": [
+        880,
+        -80
+      ],
+      "parameters": {
+        "authentication": "appToken",
+        "resource": "deal",
+        "operation": "create",
+        "stage": "appointmentscheduled",
+        "additionalFields": {
+          "dealName": "={{ $('Parse request').item.json.service + ' - ' + $('Parse request').item.json.customer + ' (' + $('Parse request').item.json.location + ')' }}",
+          "description": "={{ 'Website quote request ' + $('Parse request').item.json.receipt + '\\nPhone: ' + $('Parse request').item.json.phone + '\\nEmail: ' + $('Parse request').item.json.email }}",
+          "pipeline": "default"
+        }
+      },
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot private app (ECC)"
+        }
+      },
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "New quote email (IMAP)": {
+      "main": [
+        [
+          {
+            "node": "Parse request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse request": {
+      "main": [
+        [
+          {
+            "node": "Has customer email?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has customer email?": {
+      "main": [
+        [
+          {
+            "node": "HubSpot: upsert customer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot: upsert customer": {
+      "main": [
+        [
+          {
+            "node": "HubSpot: open deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/New_York"
+  }
+}

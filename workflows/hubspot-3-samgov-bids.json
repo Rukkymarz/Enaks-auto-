@@ -1,0 +1,356 @@
+{
+  "id": "eccSamGovBids01",
+  "name": "ECC - Commercial cleaning bids (SAM.gov) -> HubSpot",
+  "nodes": [
+    {
+      "id": "aeb99d8a-1f42-40f4-ba68-880bad98f8a3",
+      "name": "README",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -460,
+        -300
+      ],
+      "parameters": {
+        "content": "## ECC - Commercial cleaning bids (SAM.gov)\nWeekdays 7am: pulls **new federal cleaning contract opportunities** from SAM.gov (free public API) for NAICS **561720 Janitorial** and **561790 Building/dwelling services**, posted in the last 2 days, nationwide.\nEach one becomes a **HubSpot deal** (description has the link + response deadline) and you get **one digest email** to your Gmail.\n\nNeeds: free SAM.gov API key (sam.gov -> Account details -> Public API key) saved as credential `SAM.gov API key` (Query Auth, name `api_key`), `HubSpot private app (ECC)`, `Resend SMTP (support@)`.\nOnly emails *you*.",
+        "width": 560,
+        "height": 460
+      }
+    },
+    {
+      "id": "c7b93997-f13e-4a77-8995-cb78632e161d",
+      "name": "Weekdays 7am",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 7 * * 1-5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "8d17ee5a-87b1-44cd-a25f-5ac2e34b490e",
+      "name": "Run now",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "a6220b06-07bc-4d2f-b5b3-15137550f229",
+      "name": "NAICS codes",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "54997fb7-0b16-4c53-8545-ea92f048b536",
+              "name": "naics",
+              "type": "array",
+              "value": "={{ [\"561720\", \"561790\"] }}"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "15cc6072-c907-4cc1-8eba-a9b4a0a66bd4",
+      "name": "Split NAICS",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "fieldToSplitOut": "naics",
+        "options": {}
+      }
+    },
+    {
+      "id": "2d2555d5-621e-405a-a629-a0472c6e66f1",
+      "name": "SAM.gov search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "url": "=https://api.sam.gov/opportunities/v2/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "ncode",
+              "value": "={{ $json.naics }}"
+            },
+            {
+              "name": "postedFrom",
+              "value": "={{ $now.minus({days: 2}).toFormat('MM/dd/yyyy') }}"
+            },
+            {
+              "name": "postedTo",
+              "value": "={{ $now.toFormat('MM/dd/yyyy') }}"
+            },
+            {
+              "name": "ptype",
+              "value": "o,k,p"
+            },
+            {
+              "name": "limit",
+              "value": "50"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "httpQueryAuth": {
+          "name": "SAM.gov API key"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "3b3212e3-4260-411e-a2f8-b012107bf1e9",
+      "name": "One per opportunity",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "fieldToSplitOut": "opportunitiesData",
+        "options": {}
+      }
+    },
+    {
+      "id": "e3f934cb-dc95-4970-ad8c-96292e78626b",
+      "name": "Active only",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        1100,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "1382773e-9015-4a48-be78-3f7fc9198bb7",
+              "leftValue": "={{ $json.active }}",
+              "rightValue": "Yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "c90279e6-da1e-4673-b059-900d5a68a5d5",
+      "name": "HubSpot: bid deal",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.1,
+      "position": [
+        1320,
+        0
+      ],
+      "parameters": {
+        "authentication": "appToken",
+        "resource": "deal",
+        "operation": "create",
+        "stage": "qualifiedtobuy",
+        "additionalFields": {
+          "dealName": "={{ 'BID: ' + $json.title.slice(0, 80) }}",
+          "closeDate": "={{ $json.responseDeadLine ? DateTime.fromISO($json.responseDeadLine).toISO() : $now.plus({days: 14}).toISO() }}",
+          "description": "={{ ($json.fullParentPathName || '') + '\\nPlace: ' + [$json.placeOfPerformance?.city?.name, $json.placeOfPerformance?.state?.code].filter(Boolean).join(', ') + '\\nSet-aside: ' + ($json.typeOfSetAsideDescription || 'none') + '\\nDeadline: ' + ($json.responseDeadLine || 'n/a') + '\\n' + $json.uiLink }}",
+          "pipeline": "default"
+        }
+      },
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot private app (ECC)"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "fbc14b3c-abaa-43f5-8d0e-4fde74f31909",
+      "name": "Digest list",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1540,
+        0
+      ],
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "bids",
+        "options": {}
+      }
+    },
+    {
+      "id": "e10e626c-27c2-48ce-8406-3a5948c4c93b",
+      "name": "Email digest to owner",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1760,
+        0
+      ],
+      "parameters": {
+        "fromEmail": "Express Cleaning Consult <support@expresscleaningconsult.com>",
+        "toEmail": "expressconsulting92@gmail.com",
+        "subject": "={{ $json.bids.length + ' new cleaning bids on SAM.gov (' + $now.toFormat('MMM d') + ')' }}",
+        "emailFormat": "text",
+        "text": "={{ $('Active only').all().map(b => '- ' + b.json.title + ' | ' + [b.json.placeOfPerformance?.city?.name, b.json.placeOfPerformance?.state?.code].filter(Boolean).join(', ') + ' | due ' + (b.json.responseDeadLine || 'n/a') + '\\n  ' + b.json.uiLink).join('\\n\\n') }}\n\nAll are also in HubSpot as deals starting with BID:.",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "smtp": {
+          "name": "Resend SMTP (support@)"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Weekdays 7am": {
+      "main": [
+        [
+          {
+            "node": "NAICS codes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run now": {
+      "main": [
+        [
+          {
+            "node": "NAICS codes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NAICS codes": {
+      "main": [
+        [
+          {
+            "node": "Split NAICS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split NAICS": {
+      "main": [
+        [
+          {
+            "node": "SAM.gov search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SAM.gov search": {
+      "main": [
+        [
+          {
+            "node": "One per opportunity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "One per opportunity": {
+      "main": [
+        [
+          {
+            "node": "Active only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Active only": {
+      "main": [
+        [
+          {
+            "node": "HubSpot: bid deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot: bid deal": {
+      "main": [
+        [
+          {
+            "node": "Digest list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Digest list": {
+      "main": [
+        [
+          {
+            "node": "Email digest to owner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/New_York"
+  }
+}
