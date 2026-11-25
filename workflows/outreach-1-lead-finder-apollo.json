@@ -54,7 +54,7 @@
               "id": "b74f1e5f-ae0d-43ed-b1d4-0c02fd4a841b",
               "name": "segments",
               "type": "array",
-              "value": "={{ [{\"segment\": \"Property managers\", \"titles\": [\"property manager\", \"community manager\", \"regional property manager\", \"portfolio manager\"], \"org_keywords\": [], \"pitch\": \"recurring common-area cleaning, unit turnovers and move-out cleans across their properties\", \"location\": \"United States\", \"per_page\": 5}, {\"segment\": \"Realtors\", \"titles\": [\"realtor\", \"real estate agent\", \"real estate broker\"], \"org_keywords\": [], \"pitch\": \"pre-listing deep cleans and move-in/move-out cleans that help listings show and close faster\", \"location\": \"United States\", \"per_page\": 5}, {\"segment\": \"Contractors / builders\", \"titles\": [\"general contractor\", \"construction project manager\", \"superintendent\", \"owner\"], \"org_keywords\": [\"construction\", \"general contractor\", \"home builder\"], \"pitch\": \"post-construction and final cleans so jobs are handed over spotless and on schedule\", \"location\": \"United States\", \"per_page\": 5}, {\"segment\": \"Short-term rental managers\", \"titles\": [\"owner\", \"operations manager\", \"property manager\", \"founder\"], \"org_keywords\": [\"vacation rental\", \"short term rental\", \"airbnb management\"], \"pitch\": \"fast, reliable turnover cleans between guests with consistent quality\", \"location\": \"United States\", \"per_page\": 5}] }}"
+              "value": "={{ [{\"segment\": \"Property managers\", \"goal\": \"client\", \"titles\": [\"property manager\", \"community manager\", \"regional property manager\", \"portfolio manager\"], \"org_keywords\": [], \"pitch\": \"recurring common-area cleaning, unit turnovers and move-out cleans across their properties\", \"location\": \"United States\", \"per_page\": 4}, {\"segment\": \"Facility / office managers\", \"goal\": \"client\", \"titles\": [\"facilities manager\", \"office manager\", \"facility director\", \"operations manager\"], \"org_keywords\": [], \"pitch\": \"recurring office and janitorial cleaning on their schedule, including after-hours\", \"location\": \"United States\", \"per_page\": 4}, {\"segment\": \"Realtors\", \"goal\": \"client\", \"titles\": [\"realtor\", \"real estate agent\", \"real estate broker\"], \"org_keywords\": [], \"pitch\": \"pre-listing deep cleans and move-in/move-out cleans that help listings show and close faster\", \"location\": \"United States\", \"per_page\": 3}, {\"segment\": \"Contractors / builders\", \"goal\": \"client\", \"titles\": [\"general contractor\", \"construction project manager\", \"superintendent\", \"owner\"], \"org_keywords\": [\"construction\", \"general contractor\", \"home builder\"], \"pitch\": \"post-construction and final cleans so jobs are handed over spotless and on schedule\", \"location\": \"United States\", \"per_page\": 3}, {\"segment\": \"Short-term rental managers\", \"goal\": \"client\", \"titles\": [\"owner\", \"operations manager\", \"property manager\", \"founder\"], \"org_keywords\": [\"vacation rental\", \"short term rental\", \"airbnb management\"], \"pitch\": \"fast, reliable turnover cleans between guests with consistent quality\", \"location\": \"United States\", \"per_page\": 3}, {\"segment\": \"Partner cleaners\", \"goal\": \"partner\", \"titles\": [\"owner\", \"founder\", \"cleaning manager\"], \"org_keywords\": [\"cleaning services\", \"janitorial services\", \"maid service\", \"house cleaning\"], \"pitch\": \"steady, pre-quoted cleaning jobs in their area through our nationwide booking network, with the scope agreed before they arrive\", \"location\": \"United States\", \"per_page\": 3}] }}"
             }
           ]
         },
@@ -218,7 +218,7 @@
         100
       ],
       "parameters": {
-        "text": "=Write a first-touch cold email from Rukky, owner of Express Cleaning Consult (nationwide cleaning company; clients book with us and vetted local partner cleaners do the work; every job is quoted individually, free quote).\nRecipient: {{ $json.person.first_name }} {{ $json.person.last_name }}, {{ $json.person.title }} at {{ $json.person.organization?.name || 'their company' }}, located {{ [$json.person.city, $json.person.state].filter(Boolean).join(', ') }}.\nSegment: {{ $('Split segments').item.json.segment }}. What we offer this segment: {{ $('Split segments').item.json.pitch }}.",
+        "text": "=Write a first-touch cold email from Rukky, owner of Express Cleaning Consult (nationwide cleaning company; clients book with us and vetted local partner cleaners do the work; every job is quoted individually, free quote).\nRecipient: {{ $json.person.first_name }} {{ $json.person.last_name }}, {{ $json.person.title }} at {{ $json.person.organization?.name || 'their company' }}, located {{ [$json.person.city, $json.person.state].filter(Boolean).join(', ') }}.\nSegment: {{ $('Split segments').item.json.segment }}.\n{{ $('Split segments').item.json.goal === 'partner' ? 'GOAL: invite this cleaning business to join our partner network and receive jobs. Do NOT offer them a cleaning quote. What we offer partners: ' : 'GOAL: offer a free, no-obligation cleaning quote. What we offer this segment: ' }}{{ $('Split segments').item.json.pitch }}.",
         "attributes": {
           "attributes": [
             {
@@ -228,7 +228,7 @@
             },
             {
               "name": "body",
-              "description": "Plain-text email body, 60-110 words. Greet by first name. One specific line relevant to their role/company. Offer a free, no-obligation quote. One clear call to action: reply to this email. Sign off exactly: 'Rukky\\nExpress Cleaning Consult\\nexpresscleaningconsult.com'. Do NOT include prices, guarantees, fake stats, fake references, or an unsubscribe line.",
+              "description": "Plain-text email body, 60-110 words. Greet by first name. One specific line relevant to their role/company. One clear call to action: reply to this email. Sign off exactly: 'Rukky\\nExpress Cleaning Consult\\nexpresscleaningconsult.com'. Do NOT include prices, guarantees, fake stats, fake references, or an unsubscribe line.",
               "required": true
             }
           ]
@@ -341,6 +341,12 @@
               "name": "status",
               "type": "string",
               "value": "pending_approval"
+            },
+            {
+              "id": "7f060e02-ec47-44d8-8bd3-6ea1a2e08e5c",
+              "name": "goal",
+              "type": "string",
+              "value": "={{ $('Split segments').item.json.goal }}"
             }
           ]
         },
