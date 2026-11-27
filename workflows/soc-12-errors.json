@@ -5,7 +5,7 @@
   "nodes": [
     {
       "parameters": {},
-      "id": "f7d502af-c98c-4fe0-bf8e-47c39c012f87",
+      "id": "d39ea26f-52ee-4ef6-9b71-3188832ce46b",
       "name": "On any SOC workflow error",
       "type": "n8n-nodes-base.errorTrigger",
       "typeVersion": 1,
@@ -22,7 +22,7 @@
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "supabaseApi"
       },
-      "id": "d3b53b3a-5d14-47ed-b8f4-2fe23a0d51c3",
+      "id": "3f46ac40-47d0-4de7-9a52-49f7dc01c98a",
       "name": "Get config",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -48,7 +48,7 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ workflow: $('On any SOC workflow error').item.json.workflow.name, node: ($('On any SOC workflow error').item.json.execution.lastNodeExecuted || ''), message: String(($('On any SOC workflow error').item.json.execution.error || {}).message || 'unknown').slice(0, 900), execution_url: $('On any SOC workflow error').item.json.execution.url || null }) }}"
       },
-      "id": "8dcb1a4b-9242-4fbc-8cbb-e98b95e20dea",
+      "id": "44508ce7-e9f2-43fb-b61c-e3309541b127",
       "name": "Log error",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -74,7 +74,7 @@
           "appendAttribution": false
         }
       },
-      "id": "5fbad223-a846-43e2-8b60-36313d9c5fcc",
+      "id": "5237a528-61ba-4fd0-b38f-9a2b0df1c9ff",
       "name": "Email the error",
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,

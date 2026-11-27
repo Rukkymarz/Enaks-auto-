@@ -2,7 +2,7 @@
 """Generates the 12 SOC-* n8n workflows for the Express Cleaning Consult social system.
 
 All storage goes through Supabase REST (credential "Social DB (Supabase)"), AI through FreeLLMAPI
-(credential "FreeLLMAPI key", OpenAI-compatible, model auto), email through SMTP (credential
+(credential "OpenAI account", OpenAI-compatible pointing at FreeLLMAPI, model auto), email through SMTP (credential
 "Social email (SMTP)"), publishing through Postiz (header credential "Postiz API key"), comments
 through Meta Graph (credential "Meta Page token"). No secrets, no credential ids: assign credentials
 in n8n after import. Every workflow imports switched OFF.
@@ -98,7 +98,7 @@ CFG = "Object.fromEntries($('{n}').all().map(i => [i.json.key, i.json.value]))"
 def llm(name, pos):
     n = node(name, "@n8n/n8n-nodes-langchain.lmChatOpenAi", 1.2,
              {"model": {"__rl": True, "mode": "id", "value": "auto"}, "options": {"temperature": 0.7}}, pos)
-    n["credentials"] = {"openAiApi": {"name": "FreeLLMAPI key"}}
+    n["credentials"] = {"openAiApi": {"name": "OpenAI account"}}
     return n
 
 

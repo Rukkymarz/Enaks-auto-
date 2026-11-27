@@ -19,7 +19,7 @@ Regenerate the workflow JSON with `python3 social/build_workflows.py`; schema in
 | 12 | Error monitor | Error workflow for 01-11 | needs SMTP credential |
 
 Credentials to create in n8n (names must match): `Social DB (Supabase)` (Supabase API: project URL + service_role key),
-`FreeLLMAPI key` (exists), `Social email (SMTP)` (Gmail app password), `Postiz API key` (Header Auth: Authorization),
+`OpenAI account` (exists; Base URL = local FreeLLMAPI), `Social email (SMTP)` (Gmail app password), `Postiz API key` (Header Auth: Authorization),
 `Meta Page token` (Facebook Graph API). Nothing is hard-coded; every workflow imports switched OFF.
 
 Database safety tested 2026-11-27: duplicate topics blocked (incl. reworded), daily cap and non-promotional-first pick,
