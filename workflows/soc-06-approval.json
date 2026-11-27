@@ -9,7 +9,7 @@
         "width": 520,
         "height": 280
       },
-      "id": "8c6b4cd2-ac68-480a-aa3e-c198adbfefe8",
+      "id": "896e3636-f18a-41c8-84fb-e6be790c1dfd",
       "name": "Note 1",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -45,7 +45,7 @@
           }
         }
       },
-      "id": "c3cf0da3-7017-4478-b072-e69cb6609b60",
+      "id": "5631bd02-7735-4ade-ba91-eae9eb2a1ff6",
       "name": "Attach media form",
       "type": "n8n-nodes-base.formTrigger",
       "typeVersion": 2.3,
@@ -56,7 +56,7 @@
     },
     {
       "parameters": {},
-      "id": "28a53a08-027f-400e-a88d-c7f16b8ea49c",
+      "id": "2f821a84-39b0-4627-b4de-ea996e85e548",
       "name": "Called by another workflow",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1,
@@ -70,13 +70,13 @@
         "assignments": {
           "assignments": [
             {
-              "id": "bb9e5102-d3ed-4cf5-a676-fecebe7a1a4b",
+              "id": "9ae49366-e264-47b6-be0b-065d4c61b210",
               "name": "content_id",
               "value": "={{ $json['Post id'] }}",
               "type": "number"
             },
             {
-              "id": "69a424e8-21c5-448f-82b7-1a9f55c42826",
+              "id": "f744d663-95ad-42b6-a0a4-8f924469c71a",
               "name": "media",
               "value": "={{ ($json['Media links'] || '').split(/\\s+/).filter(u => /^https?:\\/\\//.test(u)) }}",
               "type": "array"
@@ -85,7 +85,7 @@
         },
         "options": {}
       },
-      "id": "3c21cacb-51e4-458c-8930-91de6e69d3bb",
+      "id": "0216bd60-7c0c-497f-989e-34308ff0aa55",
       "name": "From form",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -99,13 +99,13 @@
         "assignments": {
           "assignments": [
             {
-              "id": "a56ff72f-8298-40ab-b2d3-24a07bbbb083",
+              "id": "4a13b068-1efa-4715-9de7-5849cc741f18",
               "name": "content_id",
               "value": "={{ $json.content_id }}",
               "type": "number"
             },
             {
-              "id": "b02c9fb2-b967-447c-b33f-be679293a203",
+              "id": "35850469-408a-4b4d-ae1a-50728d4497f6",
               "name": "media",
               "value": "={{ [] }}",
               "type": "array"
@@ -114,7 +114,7 @@
         },
         "options": {}
       },
-      "id": "7e2e6c25-9569-4e28-92b5-d322d660acdf",
+      "id": "881ab0f1-9ea0-446c-815c-e14e06fc14f9",
       "name": "From workflow",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -131,7 +131,7 @@
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "supabaseApi"
       },
-      "id": "a371f3e9-2125-4172-bc64-0a98c0d51141",
+      "id": "9a301151-04ff-42cf-88ba-5d237a4d932e",
       "name": "Get config",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -154,7 +154,7 @@
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "supabaseApi"
       },
-      "id": "b14e83dd-d90d-410c-a98b-510c1bc6b886",
+      "id": "99832ec1-b573-4a6d-9020-7abf96a2a52b",
       "name": "Load post",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -172,7 +172,7 @@
       "parameters": {
         "jsCode": "const incoming = ($('From form').isExecuted ? $('From form').first().json.media : $('From workflow').first().json.media) || [];\nreturn $input.all().map(i => ({ json: { ...i.json, media_urls: incoming.length ? incoming : (i.json.media_urls || []) } }));"
       },
-      "id": "abc7e5a1-ef73-424b-bdf1-0ee2426cfe8e",
+      "id": "f91b67ba-e47a-4a8e-a984-3d6fcd38181c",
       "name": "Merge media",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -192,7 +192,7 @@
           },
           "conditions": [
             {
-              "id": "e7bffca8-0768-4dac-bc37-b56b3c846cb7",
+              "id": "2eeed9a8-27e5-4d25-9ba3-076290ab7766",
               "leftValue": "={{ Object.fromEntries($('Get config').all().map(i => [i.json.key, i.json.value])).auto_publish }}",
               "operator": {
                 "type": "boolean",
@@ -206,7 +206,7 @@
         },
         "options": {}
       },
-      "id": "914dc9de-2dc7-416a-a429-c07bce58341c",
+      "id": "aa600d93-59ad-4fcf-8859-37cfe39d6770",
       "name": "Auto-publish on?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
@@ -235,7 +235,7 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ status: 'approved', media_urls: $json.media_urls }) }}"
       },
-      "id": "fc665c59-4991-4eb9-b967-30428ae4d488",
+      "id": "eb994b60-5667-4c3a-aab2-96fc0364dd96",
       "name": "Mark approved (auto)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -269,7 +269,7 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ status: 'pending_approval', media_urls: $json.media_urls }) }}"
       },
-      "id": "f478debc-878c-43d9-9eb4-2e415f91ee58",
+      "id": "1186b5b5-2e08-4115-ba6a-2e7690944dca",
       "name": "Mark pending approval",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -327,7 +327,7 @@
           }
         }
       },
-      "id": "1d99a0d9-cfa5-40ea-af70-6842ba59e75f",
+      "id": "d1a9f74e-36d1-4118-9e3f-eb0aa6587a27",
       "name": "Email approval request",
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
@@ -355,7 +355,7 @@
                 },
                 "conditions": [
                   {
-                    "id": "dc520561-7541-4b26-be08-9e77d63417b3",
+                    "id": "30eac2f9-c3fd-4a7e-84b5-c15f774d5857",
                     "leftValue": "={{ $json.data ? $json.data.Decision : 'Timed out' }}",
                     "operator": {
                       "type": "string",
@@ -379,7 +379,7 @@
                 },
                 "conditions": [
                   {
-                    "id": "a10e4ae2-f5e2-4821-abd9-e62266c80a1a",
+                    "id": "5a49600d-c94d-44fa-9f9a-94adc9c9c7e1",
                     "leftValue": "={{ $json.data ? $json.data.Decision : 'Timed out' }}",
                     "operator": {
                       "type": "string",
@@ -388,7 +388,7 @@
                     "rightValue": "Request revision"
                   },
                   {
-                    "id": "ac7de6cb-accd-4227-bc7b-c96d05e91e3e",
+                    "id": "d167344b-cfdb-4ba6-b354-e4eea134b20a",
                     "leftValue": "={{ $json.data ? $json.data.Decision : 'Timed out' }}",
                     "operator": {
                       "type": "string",
@@ -408,7 +408,7 @@
           "fallbackOutput": "extra"
         }
       },
-      "id": "f9a30d75-410b-4c25-8229-eca37fe41a28",
+      "id": "ec9c1018-549f-4887-876b-a7a565f920b1",
       "name": "Decision",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
@@ -428,7 +428,7 @@
         "specifyBody": "json",
         "jsonBody": "{}"
       },
-      "id": "c169c121-9b84-42fc-8913-374f3ab3a3f4",
+      "id": "c7a84849-edc7-48bc-9027-3d642358cb12",
       "name": "Slot if missed",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -462,7 +462,7 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ status: 'approved', scheduled_at: new Date($('Mark pending approval').item.json.scheduled_at) > new Date(Date.now() + 15*60000) ? $('Mark pending approval').item.json.scheduled_at : $json.slot }) }}"
       },
-      "id": "1f6458b6-daf9-43d7-ab30-27796e8375f1",
+      "id": "b91c284b-83dc-4d2f-b38d-842d7e7cd51b",
       "name": "Mark approved",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -487,7 +487,7 @@
           },
           "conditions": [
             {
-              "id": "2aab3b71-3f2b-4ef8-bad1-724ac2b007f7",
+              "id": "a665f45c-51c5-4550-8444-1e2b1725f6b0",
               "leftValue": "={{ $('Mark pending approval').item.json.revision_count }}",
               "operator": {
                 "type": "number",
@@ -500,7 +500,7 @@
         },
         "options": {}
       },
-      "id": "b514260f-627b-4fd3-8629-8090bd7723a4",
+      "id": "dd13697e-31e5-4fe4-a4aa-d539b4717ab5",
       "name": "Under 3 revisions?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
@@ -529,7 +529,7 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ status: 'revision', revision_count: $('Mark pending approval').item.json.revision_count + 1, approval_note: ($('Decision').item.json.data.Decision + ': ' + ($('Decision').item.json.data['Notes for the revision'] || 'no notes')) }) }}"
       },
-      "id": "59fd4800-f7de-4839-bf79-06ed3f6de613",
+      "id": "c383f8c6-b62e-4f32-ad65-adc5fee28add",
       "name": "Mark revision",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -547,7 +547,7 @@
       "parameters": {
         "jsCode": "return $input.all().map(i => ({ json: { ...i.json, revision_note: i.json.approval_note } }));"
       },
-      "id": "211beba7-c03d-418d-b470-791f66d54e15",
+      "id": "2cdb5e05-517d-44f7-9b6a-dc8a7783ccbc",
       "name": "Attach revision note",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -570,7 +570,7 @@
                 },
                 "conditions": [
                   {
-                    "id": "24ec5e03-313c-4b19-8535-edabb49b7bce",
+                    "id": "015058e4-4ebb-4c56-bca1-78835227af1c",
                     "leftValue": "={{ $json.format }}",
                     "operator": {
                       "type": "string",
@@ -579,7 +579,7 @@
                     "rightValue": "single"
                   },
                   {
-                    "id": "e89c4708-5ded-4180-8031-0bc8e67b7a4e",
+                    "id": "a4eca74b-91be-467d-bafe-0e14624ed707",
                     "leftValue": "={{ $json.format }}",
                     "operator": {
                       "type": "string",
@@ -588,7 +588,7 @@
                     "rightValue": "text"
                   },
                   {
-                    "id": "7f18c624-e999-45e8-87d4-475766832a43",
+                    "id": "5b53da80-123c-4cd8-8526-17749d75a15f",
                     "leftValue": "={{ $json.format }}",
                     "operator": {
                       "type": "string",
@@ -597,7 +597,7 @@
                     "rightValue": "poll"
                   },
                   {
-                    "id": "ab82e57e-04cf-4433-a609-d6f7ca3b4ec6",
+                    "id": "412c1a50-a3d7-4fda-ba9d-c84c17fa19ec",
                     "leftValue": "={{ $json.format }}",
                     "operator": {
                       "type": "string",
@@ -621,7 +621,7 @@
                 },
                 "conditions": [
                   {
-                    "id": "2360a6d1-4a25-49e0-b17c-d33662fccf37",
+                    "id": "e5356dfa-9873-4fe4-bd45-d54bce639bfe",
                     "leftValue": "={{ $json.format }}",
                     "operator": {
                       "type": "string",
@@ -645,7 +645,7 @@
                 },
                 "conditions": [
                   {
-                    "id": "815d65a1-5095-42f7-9082-4e3f5fda6562",
+                    "id": "c1e7be47-4d42-4876-9529-713fbfa8deec",
                     "leftValue": "={{ $json.format }}",
                     "operator": {
                       "type": "string",
@@ -663,7 +663,7 @@
         },
         "options": {}
       },
-      "id": "97cf21ce-d402-40d9-ab25-116af613df7e",
+      "id": "667f49c1-a861-4997-add5-fafa265ed82f",
       "name": "Regenerate by format",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
@@ -684,7 +684,7 @@
           "value": "socSinglePost001"
         }
       },
-      "id": "6b890013-6993-4e54-b6a5-2725137b8182",
+      "id": "57e479cb-7642-4e21-9c72-f0a8c24fdf60",
       "name": "Redo single (SOC-03)",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.1,
@@ -705,7 +705,7 @@
           "value": "socCarousel00001"
         }
       },
-      "id": "0aacd345-cd37-4789-a887-bb58e9392a53",
+      "id": "1bbfa7dc-da25-4ec7-953d-d3b8698ac50c",
       "name": "Redo carousel (SOC-04)",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.1,
@@ -726,7 +726,7 @@
           "value": "socVideoScript01"
         }
       },
-      "id": "b8fb2003-9225-4e1e-9064-cdaf608feb75",
+      "id": "306cb203-9baf-40f5-8281-bf9f5650a2b6",
       "name": "Redo video (SOC-05)",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.1,
@@ -755,7 +755,7 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ status: 'rejected', approval_note: 'Stopped after 3 revisions or no reply' }) }}"
       },
-      "id": "7ba39468-abad-4cec-9e3e-5a1b2c7c76ee",
+      "id": "e9bfdd97-0495-4ab3-91fb-5037faf8f0d5",
       "name": "Mark rejected",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
