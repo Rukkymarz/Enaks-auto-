@@ -1,0 +1,330 @@
+{
+  "id": "socCalendar00001",
+  "name": "SOC-02 Daily Content Calendar Generator",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## SOC-02 Daily calendar\n07:00 ET daily. soc_pick_daily locks rows so a double run cannot pick the same idea twice.",
+        "width": 420,
+        "height": 260
+      },
+      "id": "9acc2fd5-8f24-401f-818c-703fdebe33ff",
+      "name": "Note 1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        -240
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 7 * * *"
+            }
+          ]
+        }
+      },
+      "id": "25aff853-665c-452b-aa51-32693c1822d9",
+      "name": "Every day 07:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "cf4f6caf-fb33-4cc6-9f2b-81b4f03a9884",
+      "name": "Run manually (test)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://cnlvbusjqwepotvlqcgx.supabase.co/rest/v1/rpc/soc_pick_daily",
+        "options": {},
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{}"
+      },
+      "id": "6f5a60a3-427e-4ac8-b3da-32bc7b53d85c",
+      "name": "Pick today's ideas",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        80
+      ],
+      "alwaysOutputData": false,
+      "credentials": {
+        "supabaseApi": {
+          "name": "Social DB (Supabase)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c3d66a4d-fed7-4b44-a818-ef07f33987d7",
+                    "leftValue": "={{ $json.format }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "single"
+                  },
+                  {
+                    "id": "0934da40-7d53-4cbd-9cdc-778410ab2035",
+                    "leftValue": "={{ $json.format }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "text"
+                  },
+                  {
+                    "id": "4dbc5302-49a2-4330-9556-057260fbe3cb",
+                    "leftValue": "={{ $json.format }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "poll"
+                  },
+                  {
+                    "id": "2c760e4b-bbaa-469a-969e-5b9248183d10",
+                    "leftValue": "={{ $json.format }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "thread"
+                  }
+                ],
+                "combinator": "or"
+              },
+              "renameOutput": true,
+              "outputKey": "single"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "e5431689-d7b6-487e-bc78-a307871bd4fc",
+                    "leftValue": "={{ $json.format }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "carousel"
+                  }
+                ],
+                "combinator": "or"
+              },
+              "renameOutput": true,
+              "outputKey": "carousel"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "901b867c-7c1e-4630-9c53-bcb241767847",
+                    "leftValue": "={{ $json.format }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "video"
+                  }
+                ],
+                "combinator": "or"
+              },
+              "renameOutput": true,
+              "outputKey": "video"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "db4bc5d4-4872-424d-8609-0ac23777f53e",
+      "name": "Route by format",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        480,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "each",
+        "options": {
+          "waitForSubWorkflow": true
+        },
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "socSinglePost001"
+        }
+      },
+      "id": "10fd9ecd-0d6b-4405-bebc-080e4c5e69bd",
+      "name": "Single post (SOC-03)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        740,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "each",
+        "options": {
+          "waitForSubWorkflow": true
+        },
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "socCarousel00001"
+        }
+      },
+      "id": "f2518577-5b5d-4067-b671-a356b4d63c6b",
+      "name": "Carousel (SOC-04)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        740,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "each",
+        "options": {
+          "waitForSubWorkflow": true
+        },
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "socVideoScript01"
+        }
+      },
+      "id": "bcc3cb19-4b24-45e4-86cc-b52306f6db8e",
+      "name": "Video script (SOC-05)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        740,
+        240
+      ]
+    }
+  ],
+  "connections": {
+    "Every day 07:00": {
+      "main": [
+        [
+          {
+            "node": "Pick today's ideas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run manually (test)": {
+      "main": [
+        [
+          {
+            "node": "Pick today's ideas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick today's ideas": {
+      "main": [
+        [
+          {
+            "node": "Route by format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by format": {
+      "main": [
+        [
+          {
+            "node": "Single post (SOC-03)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Carousel (SOC-04)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Video script (SOC-05)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/New_York",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "socErrors0000001"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
