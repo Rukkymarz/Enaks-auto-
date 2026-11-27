@@ -5,7 +5,7 @@
   "nodes": [
     {
       "parameters": {},
-      "id": "d39ea26f-52ee-4ef6-9b71-3188832ce46b",
+      "id": "998ce688-b32f-4406-9248-28e17ce674dc",
       "name": "On any SOC workflow error",
       "type": "n8n-nodes-base.errorTrigger",
       "typeVersion": 1,
@@ -16,13 +16,16 @@
     },
     {
       "parameters": {
-        "method": "GET",
-        "url": "https://cnlvbusjqwepotvlqcgx.supabase.co/rest/v1/soc_config?select=key,value",
+        "method": "POST",
+        "url": "https://cnlvbusjqwepotvlqcgx.supabase.co/rest/v1/rpc/soc_config_obj",
         "options": {},
         "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "supabaseApi"
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{}"
       },
-      "id": "3f46ac40-47d0-4de7-9a52-49f7dc01c98a",
+      "id": "bb6a9105-2b07-450c-bf64-ea1e4d371f48",
       "name": "Get config",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -48,7 +51,7 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ workflow: $('On any SOC workflow error').item.json.workflow.name, node: ($('On any SOC workflow error').item.json.execution.lastNodeExecuted || ''), message: String(($('On any SOC workflow error').item.json.execution.error || {}).message || 'unknown').slice(0, 900), execution_url: $('On any SOC workflow error').item.json.execution.url || null }) }}"
       },
-      "id": "44508ce7-e9f2-43fb-b61c-e3309541b127",
+      "id": "691deede-a20d-45db-b057-7c07bb6283df",
       "name": "Log error",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -65,8 +68,8 @@
     },
     {
       "parameters": {
-        "fromEmail": "={{ Object.fromEntries($('Get config').all().map(i => [i.json.key, i.json.value])).from_email }}",
-        "toEmail": "={{ Object.fromEntries($('Get config').all().map(i => [i.json.key, i.json.value])).approval_email }}",
+        "fromEmail": "={{ $('Get config').first().json.from_email }}",
+        "toEmail": "={{ $('Get config').first().json.approval_email }}",
         "subject": "=n8n error: {{ $('On any SOC workflow error').item.json.workflow.name }}",
         "emailFormat": "html",
         "html": "=<p><b>Workflow:</b> {{ $('On any SOC workflow error').item.json.workflow.name }}<br><b>Node:</b> {{ $('On any SOC workflow error').item.json.execution.lastNodeExecuted }}</p><p><b>Error:</b> {{ ($('On any SOC workflow error').item.json.execution.error || {}).message }}</p><p>{{ $('On any SOC workflow error').item.json.execution.url ? '<a href=\"' + $('On any SOC workflow error').item.json.execution.url + '\">Open the execution</a>' : '' }}</p>",
@@ -74,7 +77,7 @@
           "appendAttribution": false
         }
       },
-      "id": "5237a528-61ba-4fd0-b38f-9a2b0df1c9ff",
+      "id": "78fa10bd-41e8-41f1-ac01-37ba23883588",
       "name": "Email the error",
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,

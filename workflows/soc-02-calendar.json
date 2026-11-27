@@ -9,7 +9,7 @@
         "width": 420,
         "height": 260
       },
-      "id": "07e3e0e9-c0ba-40f1-a768-2aadbe37eb3b",
+      "id": "73d04504-e6d0-415b-84f6-0e5e6f80e06f",
       "name": "Note 1",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -29,7 +29,7 @@
           ]
         }
       },
-      "id": "bad13170-a87a-4c2d-8039-4149bb20be93",
+      "id": "3778809c-d2fc-4e2e-a4a6-b8ad7843d84c",
       "name": "Every day 07:00",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -40,7 +40,7 @@
     },
     {
       "parameters": {},
-      "id": "1c6a6f48-e465-456c-86f5-60689e3ff332",
+      "id": "0a60b5a1-d610-4c5e-98ed-417430d3fe54",
       "name": "Run manually (test)",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
@@ -60,7 +60,7 @@
         "specifyBody": "json",
         "jsonBody": "{}"
       },
-      "id": "2aab1af3-6274-4350-b8dc-5270eab70cc1",
+      "id": "50f18af8-9850-4847-91c2-3accaeb3db03",
       "name": "Pick today's ideas",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -89,7 +89,7 @@
                 },
                 "conditions": [
                   {
-                    "id": "6142a52b-1e50-493f-aacd-bac5b498715d",
+                    "id": "25b1cb84-8ead-4571-b202-a0158a6532bf",
                     "leftValue": "={{ $json.format }}",
                     "operator": {
                       "type": "string",
@@ -98,7 +98,7 @@
                     "rightValue": "single"
                   },
                   {
-                    "id": "41006b80-b5ef-4ef1-9518-3a7613ce5f7c",
+                    "id": "d90669b5-ae24-40b3-b77b-86737580c981",
                     "leftValue": "={{ $json.format }}",
                     "operator": {
                       "type": "string",
@@ -107,7 +107,7 @@
                     "rightValue": "text"
                   },
                   {
-                    "id": "0f192bc6-745f-4510-aa11-cf334026c7f5",
+                    "id": "88d6ab0c-2da9-41fc-9c68-05ced2409176",
                     "leftValue": "={{ $json.format }}",
                     "operator": {
                       "type": "string",
@@ -116,7 +116,7 @@
                     "rightValue": "poll"
                   },
                   {
-                    "id": "cd739be1-9241-44ed-8f2a-497124210f8f",
+                    "id": "8a83f49c-41d5-4c98-af06-0bb5ecf708b2",
                     "leftValue": "={{ $json.format }}",
                     "operator": {
                       "type": "string",
@@ -140,7 +140,7 @@
                 },
                 "conditions": [
                   {
-                    "id": "1dbbde18-c48f-4232-b330-54af3812228b",
+                    "id": "93db49a5-1b82-4108-b905-88c262cc106d",
                     "leftValue": "={{ $json.format }}",
                     "operator": {
                       "type": "string",
@@ -164,7 +164,7 @@
                 },
                 "conditions": [
                   {
-                    "id": "cf678334-cb5b-4caf-8689-8e16b7650c82",
+                    "id": "ee1b31e3-cc38-49bc-ad8e-d3957353ae6d",
                     "leftValue": "={{ $json.format }}",
                     "operator": {
                       "type": "string",
@@ -182,7 +182,7 @@
         },
         "options": {}
       },
-      "id": "2a5989f8-f6e4-4dd5-99be-52668acb9b10",
+      "id": "58ae5123-8f04-4ec2-8f35-838ed0ef1ea5",
       "name": "Route by format",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
@@ -203,7 +203,7 @@
           "value": "socSinglePost001"
         }
       },
-      "id": "ca1becfa-89b2-4f88-af8b-57e2ee55b2f4",
+      "id": "c50f1486-4ebc-4627-bfbe-8d0f9f983e9e",
       "name": "Single post (SOC-03)",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.1,
@@ -224,7 +224,7 @@
           "value": "socCarousel00001"
         }
       },
-      "id": "b06bc948-d520-4eae-94da-91fce3f907df",
+      "id": "566073e5-1ea6-4187-9c29-ced0e4d0a3c2",
       "name": "Carousel (SOC-04)",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.1,
@@ -245,7 +245,7 @@
           "value": "socVideoScript01"
         }
       },
-      "id": "9ea902ba-b045-4358-a6e1-d71246942625",
+      "id": "b07f147b-0957-4fee-841f-cc8a2566acd7",
       "name": "Video script (SOC-05)",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.1,
