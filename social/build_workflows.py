@@ -98,7 +98,7 @@ CFG = "$('{n}').first().json"
 
 def llm(name, pos):
     n = node(name, "@n8n/n8n-nodes-langchain.lmChatOpenAi", 1.2,
-             {"model": {"__rl": True, "mode": "id", "value": "auto"}, "options": {"temperature": 0.7}}, pos)
+             {"model": {"__rl": True, "mode": "id", "value": "auto"}, "options": {"temperature": 0.7, "timeout": 120000, "maxRetries": 2}}, pos)
     n["credentials"] = {"openAiApi": {"name": "OpenAI account"}}
     return n
 
