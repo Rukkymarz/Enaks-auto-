@@ -1,0 +1,1005 @@
+{
+  "id": "socApproval00001",
+  "name": "SOC-06 Content Approval Workflow",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## SOC-06 Approval\nTwo ways in: the 'Attach media' form (after Canva design) or a call from a generator (text posts).\nReject and Request revision both send the post back to the AI with your note (max 3 rounds, then it is set to rejected). Approve keeps the reserved slot. auto_publish in soc_config skips the email (leave off until trusted).",
+        "width": 520,
+        "height": 280
+      },
+      "id": "8c6b4cd2-ac68-480a-aa3e-c198adbfefe8",
+      "name": "Note 1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        -300
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "Attach media and send for approval",
+        "formDescription": "Paste the finished design links (one per line, public or shareable). Use REAL project photos only.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Post id",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Media links",
+              "fieldType": "textarea",
+              "requiredField": true
+            }
+          ]
+        },
+        "responseMode": "onReceived",
+        "options": {
+          "respondWithOptions": {
+            "values": {
+              "formSubmittedText": "Sent for approval. Check the approval email."
+            }
+          }
+        }
+      },
+      "id": "c3cf0da3-7017-4478-b072-e69cb6609b60",
+      "name": "Attach media form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "28a53a08-027f-400e-a88d-c7f16b8ea49c",
+      "name": "Called by another workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bb9e5102-d3ed-4cf5-a676-fecebe7a1a4b",
+              "name": "content_id",
+              "value": "={{ $json['Post id'] }}",
+              "type": "number"
+            },
+            {
+              "id": "69a424e8-21c5-448f-82b7-1a9f55c42826",
+              "name": "media",
+              "value": "={{ ($json['Media links'] || '').split(/\\s+/).filter(u => /^https?:\\/\\//.test(u)) }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3c21cacb-51e4-458c-8930-91de6e69d3bb",
+      "name": "From form",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a56ff72f-8298-40ab-b2d3-24a07bbbb083",
+              "name": "content_id",
+              "value": "={{ $json.content_id }}",
+              "type": "number"
+            },
+            {
+              "id": "b02c9fb2-b967-447c-b33f-be679293a203",
+              "name": "media",
+              "value": "={{ [] }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7e2e6c25-9569-4e28-92b5-d322d660acdf",
+      "name": "From workflow",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://cnlvbusjqwepotvlqcgx.supabase.co/rest/v1/soc_config?select=key,value",
+        "options": {},
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi"
+      },
+      "id": "a371f3e9-2125-4172-bc64-0a98c0d51141",
+      "name": "Get config",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        100
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "supabaseApi": {
+          "name": "Social DB (Supabase)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://cnlvbusjqwepotvlqcgx.supabase.co/rest/v1/soc_content?id=eq.{{ $('From form').isExecuted ? $('From form').item.json.content_id : $('From workflow').item.json.content_id }}&select=*",
+        "options": {},
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi"
+      },
+      "id": "b14e83dd-d90d-410c-a98b-510c1bc6b886",
+      "name": "Load post",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        100
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "name": "Social DB (Supabase)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const incoming = ($('From form').isExecuted ? $('From form').first().json.media : $('From workflow').first().json.media) || [];\nreturn $input.all().map(i => ({ json: { ...i.json, media_urls: incoming.length ? incoming : (i.json.media_urls || []) } }));"
+      },
+      "id": "abc7e5a1-ef73-424b-bdf1-0ee2426cfe8e",
+      "name": "Merge media",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e7bffca8-0768-4dac-bc37-b56b3c846cb7",
+              "leftValue": "={{ Object.fromEntries($('Get config').all().map(i => [i.json.key, i.json.value])).auto_publish }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "914dc9de-2dc7-416a-a429-c07bce58341c",
+      "name": "Auto-publish on?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1100,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://cnlvbusjqwepotvlqcgx.supabase.co/rest/v1/soc_content?id=eq.{{ $json.id }}",
+        "options": {},
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ status: 'approved', media_urls: $json.media_urls }) }}"
+      },
+      "id": "fc665c59-4991-4eb9-b967-30428ae4d488",
+      "name": "Mark approved (auto)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1340,
+        -40
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "name": "Social DB (Supabase)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://cnlvbusjqwepotvlqcgx.supabase.co/rest/v1/soc_content?id=eq.{{ $json.id }}",
+        "options": {},
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ status: 'pending_approval', media_urls: $json.media_urls }) }}"
+      },
+      "id": "f478debc-878c-43d9-9eb4-2e415f91ee58",
+      "name": "Mark pending approval",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1340,
+        160
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "name": "Social DB (Supabase)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "fromEmail": "={{ Object.fromEntries($('Get config').all().map(i => [i.json.key, i.json.value])).from_email }}",
+        "toEmail": "={{ Object.fromEntries($('Get config').all().map(i => [i.json.key, i.json.value])).approval_email }}",
+        "subject": "=Approve post #{{ $json.id }}: {{ $json.topic }}",
+        "message": "=<h2>Approve post #{{ $json.id }}?</h2><p><b>Format:</b> {{ $json.format }} &nbsp; <b>Pillar:</b> {{ $json.pillar }} &nbsp; <b>Promotional:</b> {{ $json.is_promotional }}</p><p><b>Platforms:</b> {{ ($json.platforms || []).join(', ') }}</p><p><b>Scheduled:</b> {{ $json.scheduled_at ? DateTime.fromISO($json.scheduled_at).setZone('America/New_York').toFormat('ccc d LLL yyyy, h:mm a') + ' ET' : 'next free slot' }}</p><p><b>Topic:</b> {{ $json.topic }}<br><b>Hook:</b> {{ $json.hook }}</p>{{ ($json.media_urls || []).map(u => '<p><a href=\"' + u + '\">' + u + '</a><br><img src=\"' + u + '\" style=\"max-width:420px\"></p>').join('') || '<p><i>No media (text post).</i></p>' }}<h3>Captions</h3>{{ Object.entries($json.content.captions || {}).filter(([k,v]) => v).map(([k,v]) => '<p><b>' + k + '</b><br>' + String(v).replace(/\\n/g,'<br>') + '</p>').join('') }}{{ $json.content.slides ? '<h3>Slides</h3>' + $json.content.slides.map(s => '<p><b>' + s.n + '. ' + s.headline + '</b><br>' + s.body + '</p>').join('') : '' }}{{ $json.content.scenes ? '<h3>Video</h3><p>' + $json.content.hook_first_3s + '</p>' + $json.content.scenes.map(s => '<p>' + s.t + ': ' + s.shot + '<br><i>' + (s.voiceover||'') + '</i></p>').join('') : '' }}<p><b>Hashtags:</b> {{ ($json.content.hashtags || []).join(' ') }}<br><b>CTA:</b> {{ $json.content.cta }}</p>",
+        "responseType": "customForm",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Decision",
+              "fieldType": "dropdown",
+              "requiredField": true,
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Approve"
+                  },
+                  {
+                    "option": "Request revision"
+                  },
+                  {
+                    "option": "Reject"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "Notes for the revision",
+              "fieldType": "textarea"
+            }
+          ]
+        },
+        "options": {
+          "limitWaitTime": {
+            "values": {
+              "limitType": "afterTimeInterval",
+              "resumeAmount": 3,
+              "resumeUnit": "days"
+            }
+          }
+        }
+      },
+      "id": "1d99a0d9-cfa5-40ea-af70-6842ba59e75f",
+      "name": "Email approval request",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1560,
+        160
+      ],
+      "credentials": {
+        "smtp": {
+          "name": "Social email (SMTP)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "dc520561-7541-4b26-be08-9e77d63417b3",
+                    "leftValue": "={{ $json.data ? $json.data.Decision : 'Timed out' }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "Approve"
+                  }
+                ],
+                "combinator": "or"
+              },
+              "renameOutput": true,
+              "outputKey": "approve"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "a10e4ae2-f5e2-4821-abd9-e62266c80a1a",
+                    "leftValue": "={{ $json.data ? $json.data.Decision : 'Timed out' }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "Request revision"
+                  },
+                  {
+                    "id": "ac7de6cb-accd-4227-bc7b-c96d05e91e3e",
+                    "leftValue": "={{ $json.data ? $json.data.Decision : 'Timed out' }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "Reject"
+                  }
+                ],
+                "combinator": "or"
+              },
+              "renameOutput": true,
+              "outputKey": "revise"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "f9a30d75-410b-4c25-8229-eca37fe41a28",
+      "name": "Decision",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1780,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://cnlvbusjqwepotvlqcgx.supabase.co/rest/v1/rpc/soc_next_slot_obj",
+        "options": {},
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{}"
+      },
+      "id": "c169c121-9b84-42fc-8913-374f3ab3a3f4",
+      "name": "Slot if missed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2000,
+        40
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "name": "Social DB (Supabase)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://cnlvbusjqwepotvlqcgx.supabase.co/rest/v1/soc_content?id=eq.{{ $('Mark pending approval').item.json.id }}",
+        "options": {},
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ status: 'approved', scheduled_at: new Date($('Mark pending approval').item.json.scheduled_at) > new Date(Date.now() + 15*60000) ? $('Mark pending approval').item.json.scheduled_at : $json.slot }) }}"
+      },
+      "id": "1f6458b6-daf9-43d7-ab30-27796e8375f1",
+      "name": "Mark approved",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2220,
+        40
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "name": "Social DB (Supabase)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2aab3b71-3f2b-4ef8-bad1-724ac2b007f7",
+              "leftValue": "={{ $('Mark pending approval').item.json.revision_count }}",
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              },
+              "rightValue": 3
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b514260f-627b-4fd3-8629-8090bd7723a4",
+      "name": "Under 3 revisions?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2000,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://cnlvbusjqwepotvlqcgx.supabase.co/rest/v1/soc_content?id=eq.{{ $('Mark pending approval').item.json.id }}",
+        "options": {},
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ status: 'revision', revision_count: $('Mark pending approval').item.json.revision_count + 1, approval_note: ($('Decision').item.json.data.Decision + ': ' + ($('Decision').item.json.data['Notes for the revision'] || 'no notes')) }) }}"
+      },
+      "id": "59fd4800-f7de-4839-bf79-06ed3f6de613",
+      "name": "Mark revision",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2220,
+        200
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "name": "Social DB (Supabase)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(i => ({ json: { ...i.json, revision_note: i.json.approval_note } }));"
+      },
+      "id": "211beba7-c03d-418d-b470-791f66d54e15",
+      "name": "Attach revision note",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2440,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "24ec5e03-313c-4b19-8535-edabb49b7bce",
+                    "leftValue": "={{ $json.format }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "single"
+                  },
+                  {
+                    "id": "e89c4708-5ded-4180-8031-0bc8e67b7a4e",
+                    "leftValue": "={{ $json.format }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "text"
+                  },
+                  {
+                    "id": "7f18c624-e999-45e8-87d4-475766832a43",
+                    "leftValue": "={{ $json.format }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "poll"
+                  },
+                  {
+                    "id": "ab82e57e-04cf-4433-a609-d6f7ca3b4ec6",
+                    "leftValue": "={{ $json.format }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "thread"
+                  }
+                ],
+                "combinator": "or"
+              },
+              "renameOutput": true,
+              "outputKey": "single"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "2360a6d1-4a25-49e0-b17c-d33662fccf37",
+                    "leftValue": "={{ $json.format }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "carousel"
+                  }
+                ],
+                "combinator": "or"
+              },
+              "renameOutput": true,
+              "outputKey": "carousel"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "815d65a1-5095-42f7-9082-4e3f5fda6562",
+                    "leftValue": "={{ $json.format }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "video"
+                  }
+                ],
+                "combinator": "or"
+              },
+              "renameOutput": true,
+              "outputKey": "video"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "97cf21ce-d402-40d9-ab25-116af613df7e",
+      "name": "Regenerate by format",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        2660,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "each",
+        "options": {
+          "waitForSubWorkflow": false
+        },
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "socSinglePost001"
+        }
+      },
+      "id": "6b890013-6993-4e54-b6a5-2725137b8182",
+      "name": "Redo single (SOC-03)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        2900,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "each",
+        "options": {
+          "waitForSubWorkflow": false
+        },
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "socCarousel00001"
+        }
+      },
+      "id": "0aacd345-cd37-4789-a887-bb58e9392a53",
+      "name": "Redo carousel (SOC-04)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        2900,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "each",
+        "options": {
+          "waitForSubWorkflow": false
+        },
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "socVideoScript01"
+        }
+      },
+      "id": "b8fb2003-9225-4e1e-9064-cdaf608feb75",
+      "name": "Redo video (SOC-05)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        2900,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://cnlvbusjqwepotvlqcgx.supabase.co/rest/v1/soc_content?id=eq.{{ $('Mark pending approval').item.json.id }}",
+        "options": {},
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ status: 'rejected', approval_note: 'Stopped after 3 revisions or no reply' }) }}"
+      },
+      "id": "7ba39468-abad-4cec-9e3e-5a1b2c7c76ee",
+      "name": "Mark rejected",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2220,
+        380
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "name": "Social DB (Supabase)"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Attach media form": {
+      "main": [
+        [
+          {
+            "node": "From form",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Called by another workflow": {
+      "main": [
+        [
+          {
+            "node": "From workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "From form": {
+      "main": [
+        [
+          {
+            "node": "Get config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "From workflow": {
+      "main": [
+        [
+          {
+            "node": "Get config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get config": {
+      "main": [
+        [
+          {
+            "node": "Load post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load post": {
+      "main": [
+        [
+          {
+            "node": "Merge media",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge media": {
+      "main": [
+        [
+          {
+            "node": "Auto-publish on?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Auto-publish on?": {
+      "main": [
+        [
+          {
+            "node": "Mark approved (auto)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark pending approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark pending approval": {
+      "main": [
+        [
+          {
+            "node": "Email approval request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email approval request": {
+      "main": [
+        [
+          {
+            "node": "Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decision": {
+      "main": [
+        [
+          {
+            "node": "Slot if missed",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Under 3 revisions?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark rejected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slot if missed": {
+      "main": [
+        [
+          {
+            "node": "Mark approved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Under 3 revisions?": {
+      "main": [
+        [
+          {
+            "node": "Mark revision",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark rejected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark revision": {
+      "main": [
+        [
+          {
+            "node": "Attach revision note",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attach revision note": {
+      "main": [
+        [
+          {
+            "node": "Regenerate by format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Regenerate by format": {
+      "main": [
+        [
+          {
+            "node": "Redo single (SOC-03)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Redo carousel (SOC-04)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Redo video (SOC-05)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/New_York",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "socErrors0000001"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

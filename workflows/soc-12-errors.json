@@ -1,0 +1,138 @@
+{
+  "id": "socErrors0000001",
+  "name": "SOC-12 Error Monitoring and Recovery",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "f7d502af-c98c-4fe0-bf8e-47c39c012f87",
+      "name": "On any SOC workflow error",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://cnlvbusjqwepotvlqcgx.supabase.co/rest/v1/soc_config?select=key,value",
+        "options": {},
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi"
+      },
+      "id": "d3b53b3a-5d14-47ed-b8f4-2fe23a0d51c3",
+      "name": "Get config",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "supabaseApi": {
+          "name": "Social DB (Supabase)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://cnlvbusjqwepotvlqcgx.supabase.co/rest/v1/soc_errors",
+        "options": {},
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ workflow: $('On any SOC workflow error').item.json.workflow.name, node: ($('On any SOC workflow error').item.json.execution.lastNodeExecuted || ''), message: String(($('On any SOC workflow error').item.json.execution.error || {}).message || 'unknown').slice(0, 900), execution_url: $('On any SOC workflow error').item.json.execution.url || null }) }}"
+      },
+      "id": "8dcb1a4b-9242-4fbc-8cbb-e98b95e20dea",
+      "name": "Log error",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "supabaseApi": {
+          "name": "Social DB (Supabase)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ Object.fromEntries($('Get config').all().map(i => [i.json.key, i.json.value])).from_email }}",
+        "toEmail": "={{ Object.fromEntries($('Get config').all().map(i => [i.json.key, i.json.value])).approval_email }}",
+        "subject": "=n8n error: {{ $('On any SOC workflow error').item.json.workflow.name }}",
+        "emailFormat": "html",
+        "html": "=<p><b>Workflow:</b> {{ $('On any SOC workflow error').item.json.workflow.name }}<br><b>Node:</b> {{ $('On any SOC workflow error').item.json.execution.lastNodeExecuted }}</p><p><b>Error:</b> {{ ($('On any SOC workflow error').item.json.execution.error || {}).message }}</p><p>{{ $('On any SOC workflow error').item.json.execution.url ? '<a href=\"' + $('On any SOC workflow error').item.json.execution.url + '\">Open the execution</a>' : '' }}</p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "5fbad223-a846-43e2-8b60-36313d9c5fcc",
+      "name": "Email the error",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        660,
+        0
+      ],
+      "credentials": {
+        "smtp": {
+          "name": "Social email (SMTP)"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "On any SOC workflow error": {
+      "main": [
+        [
+          {
+            "node": "Get config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get config": {
+      "main": [
+        [
+          {
+            "node": "Log error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log error": {
+      "main": [
+        [
+          {
+            "node": "Email the error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/New_York",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
