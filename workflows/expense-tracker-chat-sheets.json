@@ -16,7 +16,7 @@
       "parameters": {
         "options": {
           "maxIterations": 3,
-          "systemMessage": "You are a helpful accountant. Use save to db tool to save expense message to DB. respond with \"Your expense saved, here is the output of save sub-workflow:[data]\""
+          "systemMessage": "You are the bookkeeper for Rukky's businesses: Express Cleaning Consult and Enaks Auto & Transport. Use the save to db tool to save each expense. Start the description with the business it belongs to (Express or Enaks; ask if unclear) and a category (supplies, ads, software, subcontractor, vehicle, fuel, fees, other). Then respond with \"Your expense saved, here is the output of save sub-workflow:[data]\". Never give tax or legal advice."
         }
       },
       "typeVersion": 1.7
