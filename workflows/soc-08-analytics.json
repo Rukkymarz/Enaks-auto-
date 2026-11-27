@@ -9,7 +9,7 @@
         "width": 420,
         "height": 260
       },
-      "id": "66aa8de3-a81a-4457-9d0f-f9a318de74b1",
+      "id": "37fff18b-a27a-4507-bdba-c2ded8b537f1",
       "name": "Note 1",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -29,7 +29,7 @@
           ]
         }
       },
-      "id": "d60b2fff-1ce6-4c5b-9d38-cc8672f5bdd2",
+      "id": "8732207b-4619-46d1-bcc1-757a252591f4",
       "name": "Every day 05:00",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -40,7 +40,7 @@
     },
     {
       "parameters": {},
-      "id": "6e317363-3ee9-4396-8d46-39304d696cd1",
+      "id": "9b5c319c-6c2e-4a1f-9ea6-98374ac00ef0",
       "name": "Run manually (test)",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
@@ -60,7 +60,7 @@
         "specifyBody": "json",
         "jsonBody": "{}"
       },
-      "id": "b26c5f23-8a98-4083-b771-d7f6c66aa0f2",
+      "id": "7dc7e050-f078-4f0d-afd0-e2f27f7b1da7",
       "name": "Get config",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -86,7 +86,7 @@
           },
           "conditions": [
             {
-              "id": "6de26fed-5c6d-4519-b982-1f0dad705f2d",
+              "id": "c7f9c833-a8e5-4455-a42e-3c797af48192",
               "leftValue": "={{ $('Get config').first().json.postiz_base_url }}",
               "operator": {
                 "type": "string",
@@ -100,7 +100,7 @@
         },
         "options": {}
       },
-      "id": "f37e5826-f884-43ed-828a-d893ad722420",
+      "id": "fa13d191-c5a2-4755-ab76-2892d171dc10",
       "name": "Postiz configured?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
@@ -117,7 +117,7 @@
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "supabaseApi"
       },
-      "id": "8bac93ad-d9ef-4fc4-a366-73c1cbd206eb",
+      "id": "dd183f9d-20f9-4535-bcf7-98c3c737a8c8",
       "name": "Recent published posts",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -135,7 +135,7 @@
       "parameters": {
         "jsCode": "const out = [];\nfor (const i of $input.all()) for (const p of (i.json.postiz_posts || []))\n  out.push({ json: { content_id: i.json.id, postId: p.postId, integration: p.integration } });\nreturn out;"
       },
-      "id": "29e16fe8-2289-47bb-b5e4-21ba55b374cc",
+      "id": "be2eea43-358e-442e-8eea-c07c99428909",
       "name": "One row per Postiz post",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -152,7 +152,7 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth"
       },
-      "id": "54b69165-cfa9-41c6-aba3-b1f05f246d78",
+      "id": "c0a1df2c-53b9-4200-895b-db2024d77759",
       "name": "Get post analytics",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -174,7 +174,7 @@
       "parameters": {
         "jsCode": "const src = $('One row per Postiz post').all();\nconst cfg = $('Get config').first().json;\nconst byInteg = Object.fromEntries(Object.entries(cfg.postiz_integrations || {}).map(([k, v]) => [v, k]));\nconst rows = [];\n$input.all().forEach((i, idx) => {\n  const s = src[idx] && src[idx].json; if (!s) return;\n  const series = Array.isArray(i.json) ? i.json : (Array.isArray(i.json.data) ? i.json.data : (i.json.label ? [i.json] : []));\n  for (const m of series) {\n    const pts = Array.isArray(m.data) ? m.data : [];\n    if (!m.label || !pts.length) continue;\n    const last = pts[pts.length - 1];\n    const v = Number(last.total);\n    if (!Number.isFinite(v)) continue;\n    rows.push({ content_id: s.content_id, platform: byInteg[s.integration] || s.integration, postiz_post_id: s.postId, metric: m.label, value: v, raw: m });\n  }\n});\nreturn rows.length ? [{ json: { rows } }] : [];"
       },
-      "id": "f42bc1a4-ab0d-41dc-91d3-976a0ce2d271",
+      "id": "09fbae12-d65b-47ab-88d2-623bb6484cba",
       "name": "Flatten metrics",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -194,7 +194,7 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json.rows) }}"
       },
-      "id": "4cf2b604-d3b5-4b7e-86d7-9120e7cf238c",
+      "id": "a75e008f-9855-4ed9-b2eb-bab6ac405f72",
       "name": "Store metrics",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,

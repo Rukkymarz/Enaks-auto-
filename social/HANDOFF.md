@@ -56,7 +56,7 @@ Fixed already: settings returned 13 rows and made the AI run 13x (PR #5); AI cre
   - Try 2: if SMTP still fails, owner enables 2-Step Verification on expressconsulting92@gmail.com, creates a Gmail app password, and the credential becomes smtp.gmail.com:465 with that login; set `soc_config.from_email` to `"expressconsulting92@gmail.com"`.
   - Keep SMTP (not the Resend HTTP API): SOC-06 needs `emailSend` `sendAndWait`.
   - Done when: SOC-12 error email and a SOC-04 design-brief email arrive in expressconsulting92@gmail.com.
-- [ ] **P0-2 AI speed.** FreeLLMAPI free pools are mostly exhausted (OVH until ~05:45 ET daily; Groq not connected). Owner: pause Surfshark VPN, create a key at https://console.groq.com/keys, add it in the FreeLLMAPI app under Providers. Code: in `llm()` add `"timeout": 120000, "maxRetries": 2` to the lmChatOpenAi options. Done when: one SOC-04 run finishes in under 60 s.
+- [ ] **P0-2 AI speed.** FreeLLMAPI free pools are mostly exhausted (OVH until ~05:45 ET daily; Groq not connected). Owner: pause Surfshark VPN, create a key at https://console.groq.com/keys, add it in the FreeLLMAPI app under Providers. Code: DONE (PR #7, 120 s timeout + 2 retries). Done when: one SOC-04 run finishes in under 60 s.
 - [ ] **P0-3 SOC-06 approval end to end.** Verify the `emailSend` `sendAndWait` parameters (`responseType: customForm`, `formFields`, `limitWaitTime`) match n8n 2.48.6. Open the node in the editor; fix the builder if fields are missing. Test both entries:
   - (a) form "Attach media and send for approval" with post 8 and a real image URL;
   - (b) a text/poll/thread post via SOC-03.
@@ -67,7 +67,7 @@ Fixed already: settings returned 13 rows and made the AI run 13x (PR #5); AI cre
 ### P1: go live
 
 - [ ] **P1-1 Stable public address.** The quick-tunnel URL changes on every restart, which breaks approval links and form URLs. Either host on the Oracle server (`n8n-cloud` kit: Docker + Caddy + FreeLLMAPI + Postiz) or create a named Cloudflare tunnel on a domain the owner controls (`eautoandtransport.com` at Namecheap is available; `expresscleaningconsult.com` DNS is on a Cloudflare account the owner cannot access). Done when: the URL survives a restart.
-- [ ] **P1-2 Invite links.** Christine (christinewealth789@gmail.com) and Sam (Aibsammy05@mail.com) are n8n Members, status Pending. After P1-1: Settings → Users → ⋯ → Copy invite link, and give each link to the owner to send. Do not send messages yourself.
+- [x] **P1-2 Invite links.** Links generated 2026-11-27 and given to the owner; regenerate if the tunnel URL changed before they were opened. Christine (christinewealth789@gmail.com) and Sam (Aibsammy05@mail.com) are n8n Members, status Pending. After P1-1: Settings → Users → ⋯ → Copy invite link, and give each link to the owner to send. Do not send messages yourself.
 - [ ] **P1-3 Postiz.** Host Postiz (the kit includes it), owner connects Instagram, Facebook, LinkedIn, X, TikTok, YouTube, Threads, Pinterest. Then:
   - set `soc_config.postiz_base_url` (self-hosted: `https://<host>/api/public/v1`) and `postiz_integrations` (`{"instagram":"<id>",...}` from `GET /integrations`);
   - set `pinterest_board`;

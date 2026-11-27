@@ -9,7 +9,7 @@
         "width": 520,
         "height": 260
       },
-      "id": "32355ba4-ae67-487f-8680-e78131ed75c8",
+      "id": "983eebae-005f-48dd-9bab-2529f978eacb",
       "name": "Note 1",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -29,7 +29,7 @@
           ]
         }
       },
-      "id": "0ec2beae-14d6-49cd-8c9c-d02c61f163e7",
+      "id": "55d89bc4-2579-4e7f-a54b-5e0e4135bbe2",
       "name": "Every 15 minutes",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -40,7 +40,7 @@
     },
     {
       "parameters": {},
-      "id": "a85b3dca-a8f2-404e-9c36-d63f5a499a76",
+      "id": "a9a5d6b7-c47d-490c-813e-177ff1e4ad4a",
       "name": "Run manually (test)",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
@@ -60,7 +60,7 @@
         "specifyBody": "json",
         "jsonBody": "{}"
       },
-      "id": "f021719a-6a79-4617-984a-a07db74c70cc",
+      "id": "ac6008f3-40e9-41a2-8560-b69b37b88d19",
       "name": "Get config",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -86,7 +86,7 @@
           },
           "conditions": [
             {
-              "id": "b27019c8-9dd2-414d-aacc-422c9def61c8",
+              "id": "3fc5d83a-a4ae-4479-8932-3c2f1a70a0dd",
               "leftValue": "={{ $('Get config').first().json.postiz_base_url }}",
               "operator": {
                 "type": "string",
@@ -100,7 +100,7 @@
         },
         "options": {}
       },
-      "id": "dd620944-6f53-41c8-b4f6-15cf61f2ddc1",
+      "id": "504852f7-33a9-4169-b4dd-48360542e2b9",
       "name": "Postiz configured?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
@@ -120,7 +120,7 @@
         "specifyBody": "json",
         "jsonBody": "{}"
       },
-      "id": "79e77c3c-7fae-4ceb-a8a7-e97b77386eaf",
+      "id": "ba3cafd7-6c60-40c5-b201-354e8b0e03c3",
       "name": "Claim one due post",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -138,7 +138,7 @@
       "parameters": {
         "jsCode": "const out = [];\nfor (const i of $input.all()) {\n  const urls = i.json.media_urls || [];\n  if (!urls.length) out.push({ json: { post: i.json, url: null } });\n  for (const url of urls) out.push({ json: { post: i.json, url } });\n}\nreturn out;"
       },
-      "id": "fab0dda5-d6fa-4779-ba65-10e7ee3dfd37",
+      "id": "c3d34410-cbae-48a5-a963-8ee79fdc8854",
       "name": "Media list",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -158,7 +158,7 @@
           },
           "conditions": [
             {
-              "id": "f994d0c6-6eaa-4e3f-86af-3e959926b7bc",
+              "id": "08b9890d-7da9-4d96-90c0-4855367a7518",
               "leftValue": "={{ $json.url }}",
               "operator": {
                 "type": "string",
@@ -172,7 +172,7 @@
         },
         "options": {}
       },
-      "id": "76bd9714-4cea-4513-ad40-366dbf0ca44c",
+      "id": "beb33275-0d01-4294-9461-6fff9dbf3334",
       "name": "Has media?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
@@ -192,7 +192,7 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ url: $json.url }) }}"
       },
-      "id": "45ba1661-b485-4304-9e65-64eb191f72f4",
+      "id": "0c7e7940-8893-420f-9fd0-6ba39c83304e",
       "name": "Upload media to Postiz",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -213,7 +213,7 @@
       "parameters": {
         "mode": "append"
       },
-      "id": "09a4d71d-a63f-4f5a-b5ea-f0a44d3615b1",
+      "id": "2958bd81-6edc-430c-ab8c-7c1ad6ba8a53",
       "name": "Collect media",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
@@ -226,7 +226,7 @@
       "parameters": {
         "jsCode": "const cfg = $('Get config').first().json;\nconst post = $('Claim one due post').first().json;\nconst c = post.content || {};\nconst cap = c.captions || {};\nconst images = $('Upload media to Postiz').isExecuted ? $('Upload media to Postiz').all().map(i => ({ id: i.json.id, path: i.json.path })) : [];\nconst tags = (c.hashtags || []).map(h => h.startsWith('#') ? h : '#' + h).join(' ');\nconst settingsFor = (p) => ({\n  x: { __type: 'x', who_can_reply_post: 'everyone' },\n  youtube: { __type: 'youtube', title: (c.youtube && c.youtube.title) || c.title || post.topic, type: 'public' },\n  pinterest: { __type: 'pinterest', board: cfg.pinterest_board || '' },\n  tiktok: { __type: 'tiktok', privacy_level: 'PUBLIC_TO_EVERYONE', duet: false, stitch: false, comment: true, autoAddMusic: 'no', brand_content_toggle: false, brand_organic_toggle: false, content_posting_method: 'DIRECT_POST' },\n}[p] || { __type: p });\nconst posts = [], skipped = [];\nfor (const p of post.platforms || []) {\n  const integ = (cfg.postiz_integrations || {})[p];\n  const text = cap[p];\n  if (!integ || !text) { skipped.push(p); continue; }\n  posts.push({ integration: { id: integ }, value: [{ content: p === 'x' ? text : (text + (tags ? '\\n\\n' + tags : '')), image: images }], settings: settingsFor(p) });\n}\nreturn [{ json: { id: post.id, skipped, body: { type: 'now', date: new Date().toISOString(), shortLink: false, tags: [], posts } } }];"
       },
-      "id": "b666de12-6150-4562-b0b5-509e1172408d",
+      "id": "7c700246-6b8e-4dd8-aa02-4ed1263062f1",
       "name": "Build Postiz request",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -246,7 +246,7 @@
           },
           "conditions": [
             {
-              "id": "b612d52d-a0e5-4eba-a2a5-267caa7cb58f",
+              "id": "b5aa91e8-d249-4348-9caa-0a93afe47a46",
               "leftValue": "={{ $json.body.posts.length }}",
               "operator": {
                 "type": "number",
@@ -259,7 +259,7 @@
         },
         "options": {}
       },
-      "id": "bc3060ee-4492-44ad-8706-b27ee219e084",
+      "id": "2f1af5e5-4652-4f27-809d-9af1278a036e",
       "name": "Anything to post?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
@@ -279,7 +279,7 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json.body) }}"
       },
-      "id": "19b422d0-26d0-4023-a4e7-85457b485ced",
+      "id": "7f6556a0-8e49-4b89-95d0-f1b30ac4842a",
       "name": "Publish via Postiz",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -305,7 +305,7 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ p_id: $('Build Postiz request').item.json.id, p_ok: true, p_posts: $('Publish via Postiz').all().map(i => i.json), p_error: null }) }}"
       },
-      "id": "d81d1c5d-2d64-4f6e-a517-ffedb0e589b8",
+      "id": "f357b2cc-af9c-42ce-b6a2-99315f90e396",
       "name": "Record success",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -331,7 +331,7 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ p_id: $('Build Postiz request').item.json.id, p_ok: false, p_posts: null, p_error: String($json.error && ($json.error.message || JSON.stringify($json.error)) || 'unknown').slice(0, 900) }) }}"
       },
-      "id": "24c72f6b-4591-40f9-8d5a-15605ccbbcaf",
+      "id": "873ac7cd-e61d-4abc-ade6-8a089f12f665",
       "name": "Record failure",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -356,7 +356,7 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ p_id: $json.id, p_ok: false, p_posts: null, p_error: 'No Postiz integration or caption for: ' + $json.skipped.join(', ') }) }}"
       },
-      "id": "0734f951-2635-43a5-aa3f-eceddfae6792",
+      "id": "779bdef8-717d-4f03-adf1-e023d4fc4e84",
       "name": "Record nothing mapped",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -381,7 +381,7 @@
           },
           "conditions": [
             {
-              "id": "01efba8a-3571-4b7f-980a-2623acde7aa1",
+              "id": "fd29dbab-a4b4-46f6-906d-d426481a365f",
               "leftValue": "={{ $json.status }}",
               "operator": {
                 "type": "string",
@@ -394,7 +394,7 @@
         },
         "options": {}
       },
-      "id": "0e82514d-8e81-405f-a5b6-7e195d58a1a1",
+      "id": "909ff30b-0a0d-40a4-94ac-8fe2578614bf",
       "name": "Gave up?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
@@ -414,7 +414,7 @@
           "appendAttribution": false
         }
       },
-      "id": "194c55c9-209b-4806-ae29-6e20dce47645",
+      "id": "85adcf82-789c-4008-a20e-18962c859b71",
       "name": "Email publish failure",
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
