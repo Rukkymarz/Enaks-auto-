@@ -89,10 +89,11 @@ def patch_content(name, pos, id_expr, fields_expr, **extra):
 
 
 def get_config(name, pos):
-    return http(name, pos, "GET", f"{SB}/soc_config?select=key,value", executeOnce=True)
+    # one item holding every setting, so downstream nodes run once per input item, not once per setting
+    return rpc(name, pos, "soc_config_obj", executeOnce=True)
 
 
-CFG = "Object.fromEntries($('{n}').all().map(i => [i.json.key, i.json.value]))"
+CFG = "$('{n}').first().json"
 
 
 def llm(name, pos):
@@ -277,6 +278,7 @@ def build():
     w.add(extractor("Plan ideas (AI)", [880, 80],
                     CTX + "=Already used topics (do NOT repeat or lightly reword any of these):\n{{ $('Past topics').all().filter(i => i.json.topic).map(i => '- ' + i.json.topic).join('\\n') || '(none yet)' }}\n\n"
                     "Latest performance report (use its lessons; if empty there is no data yet, so do not assume what works):\n{{ $('Latest report').first().json.report_md || '(no report yet)' }}\n\n"
+                    "Today is {{ $now.setZone('America/New_York').toFormat('cccc, LLLL d, yyyy') }}. Seasonal topics must fit the current or next US season and upcoming holidays (never spring topics in fall or winter).\n"
                     "Task: first identify audience problems and content gaps, then plan exactly 14 posts for the coming week. Spread across at least 8 different pillars "
                     "from: practical cleaning tips, deep cleaning education, home routines, move-in/move-out prep, Airbnb and rental turnovers, property management "
                     "strategies, office and janitorial, mistakes and myths, before-and-after transformations, seasonal cleaning, service explanations, customer trust "
@@ -471,7 +473,7 @@ def build():
                body="={{ JSON.stringify({ url: $json.url }) }}", cred="postiz", retryOnFail=True, maxTries=3, waitBetweenTries=5000))
     w.add(node("Collect media", "n8n-nodes-base.merge", 3, {"mode": "append"}, [1540, 40]))
     w.add(code("Build Postiz request", [1760, 40],
-               "const cfg = Object.fromEntries($('Get config').all().map(i => [i.json.key, i.json.value]));\n"
+               "const cfg = $('Get config').first().json;\n"
                "const post = $('Claim one due post').first().json;\nconst c = post.content || {};\nconst cap = c.captions || {};\n"
                "const images = $('Upload media to Postiz').isExecuted ? $('Upload media to Postiz').all().map(i => ({ id: i.json.id, path: i.json.path })) : [];\n"
                "const tags = (c.hashtags || []).map(h => h.startsWith('#') ? h : '#' + h).join(' ');\n"
@@ -526,7 +528,7 @@ def build():
                "={{ " + CFG.format(n="Get config") + ".postiz_base_url }}/analytics/post/{{ $json.postId }}",
                cred="postiz", onError="continueRegularOutput", retryOnFail=True, maxTries=2, waitBetweenTries=3000))
     w.add(code("Flatten metrics", [1320, 40],
-               "const src = $('One row per Postiz post').all();\nconst cfg = Object.fromEntries($('Get config').all().map(i => [i.json.key, i.json.value]));\n"
+               "const src = $('One row per Postiz post').all();\nconst cfg = $('Get config').first().json;\n"
                "const byInteg = Object.fromEntries(Object.entries(cfg.postiz_integrations || {}).map(([k, v]) => [v, k]));\nconst rows = [];\n"
                "$input.all().forEach((i, idx) => {\n  const s = src[idx] && src[idx].json; if (!s) return;\n"
                "  const series = Array.isArray(i.json) ? i.json : (Array.isArray(i.json.data) ? i.json.data : (i.json.label ? [i.json] : []));\n"
